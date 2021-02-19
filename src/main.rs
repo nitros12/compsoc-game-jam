@@ -1,8 +1,11 @@
 use bevy::prelude::*;
 
+mod button;
+
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
+        .add_plugin(button::ButtonPlugin)
         .add_startup_system(setup_ui.system())
         .run();
 }
