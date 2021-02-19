@@ -12,5 +12,19 @@ fn setup_ui(
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn(UiCameraBundle::default());
+    commands.spawn(UiCameraBundle::default()).spawn(NodeBundle {
+        style: Style {
+            size: Size::new(Val::Px(200.0), Val::Percent(80.0)),
+            position_type: PositionType::Absolute,
+            position: Rect {
+                left: Val::Px(210.0),
+                bottom: Val::Px(10.0),
+                ..Default::default()
+            },
+            border: Rect::all(Val::Px(20.0)),
+            ..Default::default()
+        },
+        material: materials.add(Color::rgb(0.65, 0.65, 0.0).into()),
+        ..Default::default()
+    });
 }
