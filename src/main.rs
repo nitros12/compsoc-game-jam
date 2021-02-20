@@ -41,15 +41,15 @@ fn setup_ui(
         })
         .spawn(SpriteBundle {
             material: materials.add(jam_texture.clone().into()),
+            transform: Transform::from_xyz(0.0, 0.0, 3.0),
             ..Default::default()
         })
         .with(dragging::Hoverable)
         .with(dragging::Draggable)
         .spawn(SpriteBundle {
             material: materials.add(jam_texture.clone().into()),
-            transform: Transform::from_xyz(50.0, 50.0, 0.0),
+            transform: Transform::from_xyz(50.0, 50.0, 3.0),
             ..Default::default()
         })
-        .with(dragging::DropTarget)
-        ;
+        .with(dragging::DropTarget);
 }
