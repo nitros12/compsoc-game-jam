@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::dragging;
+
 pub struct ShopScenePlugin;
 
 struct Background;
@@ -38,6 +40,8 @@ fn setup(
             material: materials.add(rbook_handle.into()),
             ..Default::default()
         })
+        .with(dragging::Hoverable)
+        .with(dragging::Draggable)
         .with(Foreground)
         .with(Button);
 }
