@@ -226,7 +226,7 @@ impl JamEffect {
             JamEffect::Speed => "Radiation mutates the cells in your body, you become faster",
             JamEffect::Flight => "Your body fils with energy, so much that you fly?",
             JamEffect::HideousLaughter => {
-                "You perceives everything as hilariously funny and falls into fits of laugher."
+                "You perceive everything as hilariously funny and fall into a fit of laugher."
             }
         }
     }
