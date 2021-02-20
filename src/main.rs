@@ -30,15 +30,6 @@ fn setup_ui(
     commands
         .spawn(UiCameraBundle::default())
         .spawn(OrthographicCameraBundle::new_2d())
-        .spawn(NodeBundle {
-            style: Style {
-                size: Size::new(Val::Px(200.0), Val::Percent(80.0)),
-                border: Rect::all(Val::Px(20.0)),
-                ..Default::default()
-            },
-            material: materials.add(Color::rgb(0.65, 0.65, 0.0).into()),
-            ..Default::default()
-        })
         .spawn(SpriteBundle {
             material: materials.add(jam_texture.clone().into()),
             ..Default::default()
