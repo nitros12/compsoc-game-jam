@@ -3,6 +3,7 @@ use bevy::prelude::*;
 mod button;
 mod dragging;
 mod shop_scene;
+mod story_gen;
 
 fn main() {
     App::build()
@@ -16,6 +17,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(dragging::DragPlugin)
         .add_plugin(shop_scene::ShopScenePlugin)
+        .add_plugin(story_gen::StoryGenPlugin)
         .add_startup_system(setup_ui.system())
         .run();
 }
