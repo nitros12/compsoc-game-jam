@@ -1,12 +1,14 @@
 use bevy::prelude::*;
 
+use crate::dragging;
+
 pub struct ButtonPlugin;
 
 impl Plugin for ButtonPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.init_resource::<ButtonMaterials>()
-        .add_startup_system(setup.system())
-        .add_system(button_system.system());
+            .add_startup_system(setup.system())
+            .add_system(button_system.system());
     }
 }
 
@@ -71,11 +73,18 @@ fn setup(
                 justify_content: JustifyContent::Center,
                 // vertically center child text
                 align_items: AlignItems::Center,
+                position_type: PositionType::Absolute,
+                position: Rect {
+                    left: Val::Px(10.0),
+                    top: Val::Px(10.0),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
             material: button_materials.normal.clone(),
             ..Default::default()
         })
+        .with(dragging::Draggable)
         .with_children(|parent| {
             parent.spawn(TextBundle {
                 text: Text::with_section(
