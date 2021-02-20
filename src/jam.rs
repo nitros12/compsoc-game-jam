@@ -2,15 +2,21 @@ use std::collections::HashMap;
 
 use bevy::prelude::*;
 
+use crate::dragging;
+
 pub struct JamPlugin;
 
 impl Plugin for JamPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(setup.system());
+        app.add_startup_system_to_stage(StartupStage::PreStartup, setup_assets.system())
+            .add_startup_system(setup_jams.system())
+            .add_system_to_stage(CoreStage::PostUpdate, jam_clone_on_drag.system())
+            // .add_system_to_stage(CoreStage::PostUpdate, jam_remove_on_drop.system())
+            ;
     }
 }
 
-fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
+fn setup_assets(commands: &mut Commands, asset_server: Res<AssetServer>) {
     let ingredients = JamIngredient::all()
         .into_iter()
         .map(|&i| (i, asset_server.load(i.asset_path())))
@@ -27,7 +33,55 @@ fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-struct JamAssets {
+fn setup_jams(
+    commands: &mut Commands,
+    assets: Res<JamAssets>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    for &ingredient in JamIngredient::all() {
+        spawn_ingredient(commands, ingredient, &*assets, &mut *materials);
+    }
+}
+
+fn spawn_ingredient(
+    commands: &mut Commands,
+    ingredient: JamIngredient,
+    assets: &JamAssets,
+    materials: &mut Assets<ColorMaterial>,
+) {
+    commands
+        .spawn(SpriteBundle {
+            material: materials.add(ingredient.asset_for(assets).into()),
+            transform: ingredient.initial_transform(),
+            ..Default::default()
+        })
+        .with(ingredient)
+        .with(dragging::Hoverable)
+        .with(dragging::Draggable)
+        ;
+}
+
+fn jam_clone_on_drag(
+    commands: &mut Commands,
+    jam_assets: Res<JamAssets>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    q_dragged: Query<&JamIngredient, Added<dragging::Dragged>>,
+) {
+    for &ingredient in q_dragged.iter() {
+        spawn_ingredient(commands, ingredient, &*jam_assets, &mut *materials);
+    }
+}
+
+fn jam_remove_on_drop(
+    commands: &mut Commands,
+    q_dropped: Query<Entity, (With<JamIngredient>, Added<dragging::Dropped>)>,
+) {
+    for entity in q_dropped.iter() {
+        commands.despawn(entity);
+    }
+}
+
+pub struct JamAssets {
     ingredients: HashMap<JamIngredient, Handle<Texture>>,
     effects: HashMap<JamEffect, Handle<Texture>>,
 }
@@ -74,24 +128,66 @@ impl JamIngredient {
         ]
     }
 
+    fn initial_position(self) -> (f32, f32, f32) {
+        match self {
+            JamIngredient::Petrol => (-250.0, 50.0, 6.0),
+            JamIngredient::Urine => (-230.0, 50.0, 7.0),
+            JamIngredient::GunPowder => (-210.0, 50.0, 8.0),
+            JamIngredient::BathWater => (-190.0, 50.0, 9.0),
+            JamIngredient::AppleSeeds => (-170.0, 50.0, 10.0),
+            JamIngredient::Strawberries => (-150.0, 50.0, 11.0),
+            JamIngredient::Lemons => (-130.0, 50.0, 12.0),
+            JamIngredient::Damsons => (-110.0, 50.0, 13.0),
+            JamIngredient::HumanFlesh => (-90.0, 50.0, 14.0),
+            JamIngredient::MotorOil => (-70.0, 50.0, 15.0),
+            JamIngredient::Absinth => (-50.0, 50.0, 16.0),
+            JamIngredient::Bleach => (-30.0, 50.0, 17.0),
+            JamIngredient::Sand => (-10.0, 50.0, 18.0),
+            JamIngredient::Sugar => (10.0, 50.0, 19.0),
+            JamIngredient::Salt => (30.0, 50.0, 20.0),
+            JamIngredient::Sakura => (50.0, 50.0, 21.0),
+        }
+    }
+
+    fn initial_transform(self) -> Transform {
+        let (x, y, z) = self.initial_position();
+        Transform::from_xyz(x, y, z)
+    }
+
     fn asset_path(self) -> &'static str {
         match self {
-            JamIngredient::Petrol => "sprites/petrol.png",
-            JamIngredient::Urine => "sprites/urine.png",
-            JamIngredient::GunPowder => "sprites/gun_powder.png",
-            JamIngredient::BathWater => "sprites/bath_water.png",
-            JamIngredient::AppleSeeds => "sprites/apple_seeds.png",
-            JamIngredient::Strawberries => "sprites/strawberries.png",
-            JamIngredient::Lemons => "sprites/lemons.png",
-            JamIngredient::Damsons => "sprites/damsons.png",
-            JamIngredient::HumanFlesh => "sprites/human_flesh.png",
-            JamIngredient::MotorOil => "sprites/motor_oil.png",
-            JamIngredient::Absinth => "sprites/absinth.png",
-            JamIngredient::Bleach => "sprites/bleach.png",
-            JamIngredient::Sand => "sprites/sand.png",
-            JamIngredient::Sugar => "sprites/sugar.png",
-            JamIngredient::Salt => "sprites/salt.png",
-            JamIngredient::Sakura => "sprites/sakura.png",
+            // JamIngredient::Petrol => "sprites/petrol.png",
+            // JamIngredient::Urine => "sprites/urine.png",
+            // JamIngredient::GunPowder => "sprites/gun_powder.png",
+            // JamIngredient::BathWater => "sprites/bath_water.png",
+            // JamIngredient::AppleSeeds => "sprites/apple_seeds.png",
+            // JamIngredient::Strawberries => "sprites/strawberries.png",
+            // JamIngredient::Lemons => "sprites/lemons.png",
+            // JamIngredient::Damsons => "sprites/damsons.png",
+            // JamIngredient::HumanFlesh => "sprites/human_flesh.png",
+            // JamIngredient::MotorOil => "sprites/motor_oil.png",
+            // JamIngredient::Absinth => "sprites/absinth.png",
+            // JamIngredient::Bleach => "sprites/bleach.png",
+            // JamIngredient::Sand => "sprites/sand.png",
+            // JamIngredient::Sugar => "sprites/sugar.png",
+            // JamIngredient::Salt => "sprites/salt.png",
+            // JamIngredient::Sakura => "sprites/sakura.png",
+            JamIngredient::Petrol => "sprites/jambook.png",
+            JamIngredient::Urine => "sprites/jambook.png",
+            JamIngredient::GunPowder => "sprites/jambook.png",
+            JamIngredient::BathWater => "sprites/jambook.png",
+            JamIngredient::AppleSeeds => "sprites/jambook.png",
+            JamIngredient::Strawberries => "sprites/jambook.png",
+            JamIngredient::Lemons => "sprites/jambook.png",
+            JamIngredient::Damsons => "sprites/jambook.png",
+            JamIngredient::HumanFlesh => "sprites/jambook.png",
+            JamIngredient::MotorOil => "sprites/jambook.png",
+            JamIngredient::Absinth => "sprites/jambook.png",
+            JamIngredient::Bleach => "sprites/jambook.png",
+            JamIngredient::Sand => "sprites/jambook.png",
+            JamIngredient::Sugar => "sprites/jambook.png",
+            JamIngredient::Salt => "sprites/jambook.png",
+            JamIngredient::Sakura => "sprites/jambook.png",
         }
     }
 
@@ -185,15 +281,24 @@ impl JamEffect {
 
     fn asset_path(self) -> &'static str {
         match self {
-            JamEffect::NightVision => "sprites/night_vision.png",
-            JamEffect::SuperHumanStrength => "sprites/super_human_strength.png",
-            JamEffect::Poison => "sprites/poison.png",
-            JamEffect::Hunger => "sprites/hunger.png",
-            JamEffect::GreaterHeal => "sprites/greater_heal.png",
-            JamEffect::CureAll => "sprites/cure_all.png",
-            JamEffect::Speed => "sprites/speed.png",
-            JamEffect::Flight => "sprites/flight.png",
-            JamEffect::HideousLaughter => "sprites/hideous_laughter.png",
+            // JamEffect::NightVision => "sprites/night_vision.png",
+            // JamEffect::SuperHumanStrength => "sprites/super_human_strength.png",
+            // JamEffect::Poison => "sprites/poison.png",
+            // JamEffect::Hunger => "sprites/hunger.png",
+            // JamEffect::GreaterHeal => "sprites/greater_heal.png",
+            // JamEffect::CureAll => "sprites/cure_all.png",
+            // JamEffect::Speed => "sprites/speed.png",
+            // JamEffect::Flight => "sprites/flight.png",
+            // JamEffect::HideousLaughter => "sprites/hideous_laughter.png",
+            JamEffect::NightVision => "sprites/jambook.png",
+            JamEffect::SuperHumanStrength => "sprites/jambook.png",
+            JamEffect::Poison => "sprites/jambook.png",
+            JamEffect::Hunger => "sprites/jambook.png",
+            JamEffect::GreaterHeal => "sprites/jambook.png",
+            JamEffect::CureAll => "sprites/jambook.png",
+            JamEffect::Speed => "sprites/jambook.png",
+            JamEffect::Flight => "sprites/jambook.png",
+            JamEffect::HideousLaughter => "sprites/jambook.png",
         }
     }
 

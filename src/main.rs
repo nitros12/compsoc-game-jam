@@ -2,8 +2,8 @@ use bevy::prelude::*;
 
 mod button;
 mod dragging;
-mod shop_scene;
 mod jam;
+mod shop_scene;
 
 fn main() {
     App::build()
@@ -17,6 +17,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(dragging::DragPlugin)
         .add_plugin(shop_scene::ShopScenePlugin)
+        .add_plugin(jam::JamPlugin)
         .add_startup_system(setup_ui.system())
         .run();
 }
