@@ -31,6 +31,10 @@ fn setup(
     let tumbleweed_handle = asset_server.load("sprites/tumbleweedsheet.png");
     let tumbleweed_atlas = TextureAtlas::from_grid(tumbleweed_handle, Vec2::new(32.0, 32.0), 4, 1);
     let tumbleweed_atlas_handle = texture_atlases.add(tumbleweed_atlas);
+    let buggy_handle = asset_server.load("sprites/buggy-sheet.png");
+    let buggy_atlas = TextureAtlas::from_grid(buggy_handle, Vec2::new(128.0, 64.0), 4, 1);
+    let buggy_atlas_handle = texture_atlases.add(buggy_atlas);
+
     commands
         .spawn(SpriteBundle
         {
@@ -38,6 +42,7 @@ fn setup(
             ..Default::default()
         })
         .with(Background)
+
         .spawn(SpriteSheetBundle
         {
             texture_atlas: tumbleweed_atlas_handle,
@@ -50,6 +55,20 @@ fn setup(
             end: Vec2::new(420.0, -50.0),
             delay_timer: Timer::from_seconds(15.0, true),
         })
+
+        .spawn(SpriteSheetBundle
+        {
+            texture_atlas: buggy_atlas_handle,
+            ..Default::default()
+        })
+        .with(Timer::from_seconds(0.1, true))
+        .with(Moveable{
+            move_timer: Timer::from_seconds(5.0, true),
+            start: Vec2::new(420.0, -70.0),
+            end: Vec2::new(-420.0, -70.0),
+            delay_timer: Timer::from_seconds(40.0, true),
+        })
+
         .spawn(SpriteBundle
         {
             material: materials.add(shopfront_handle.into()),
@@ -84,15 +103,13 @@ fn move_sprites(
             let new_pos = moveable.start + (moveable.end - moveable.start) * moveable.move_timer.percent();
             transform.translation.x = new_pos.x;
             transform.translation.y = new_pos.y;
-            return;
         }
-
-        if !moveable.delay_timer.tick(time.delta_seconds()).just_finished()
+        else if !moveable.delay_timer.tick(time.delta_seconds()).just_finished()
         {
             moveable.move_timer.pause();
-            return;
+        } else {
+            moveable.move_timer.reset();
+            moveable.move_timer.unpause();
         }
-        moveable.move_timer.reset();
-        moveable.move_timer.unpause();
     }
 }
