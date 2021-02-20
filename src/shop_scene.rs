@@ -44,9 +44,9 @@ fn setup(
         })
         .with(Timer::from_seconds(0.1, true))
         .with(Moveable{
-            move_timer: Timer::from_seconds(15.0, true),
-            start: Vec2::new(-300.0, -300.0),
-            end: Vec2::new(100.0, 100.0)
+            move_timer: Timer::from_seconds(20.0, true),
+            start: Vec2::new(-600.0, -50.0),
+            end: Vec2::new(600.0, -50.0)
         })
         .spawn(SpriteBundle
         {
@@ -79,7 +79,7 @@ fn move_sprites(
     {
         if !moveable.move_timer.tick(time.delta_seconds()).just_finished()
         {
-            let new_pos = (moveable.end - moveable.start) * moveable.move_timer.percent();
+            let new_pos = moveable.start + (moveable.end - moveable.start) * moveable.move_timer.percent();
             transform.translation.x = new_pos.x;
             transform.translation.y = new_pos.y;
             return;
