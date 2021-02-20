@@ -8,6 +8,7 @@ struct Moveable {
     move_timer: Timer,
     start: Vec2,
     end: Vec2,
+    delay_timer: Timer,
 }
 
 impl Plugin for ShopScenePlugin {
@@ -45,8 +46,9 @@ fn setup(
         .with(Timer::from_seconds(0.1, true))
         .with(Moveable{
             move_timer: Timer::from_seconds(20.0, true),
-            start: Vec2::new(-600.0, -50.0),
-            end: Vec2::new(600.0, -50.0)
+            start: Vec2::new(-420.0, -50.0),
+            end: Vec2::new(420.0, -50.0),
+            delay_timer: Timer::from_seconds(15.0, true),
         })
         .spawn(SpriteBundle
         {
@@ -77,12 +79,20 @@ fn move_sprites(
 ) {
     for (mut moveable, mut transform) in query.iter_mut()
     {
-        if !moveable.move_timer.tick(time.delta_seconds()).just_finished()
+        if !moveable.move_timer.tick(time.delta_seconds()).just_finished() && !moveable.move_timer.paused()
         {
             let new_pos = moveable.start + (moveable.end - moveable.start) * moveable.move_timer.percent();
             transform.translation.x = new_pos.x;
             transform.translation.y = new_pos.y;
             return;
         }
+
+        if !moveable.delay_timer.tick(time.delta_seconds()).just_finished()
+        {
+            moveable.move_timer.pause();
+            return;
+        }
+        moveable.move_timer.reset();
+        moveable.move_timer.unpause();
     }
 }
