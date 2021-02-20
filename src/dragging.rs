@@ -40,6 +40,15 @@ pub struct Dropped;
 pub struct Hoverable;
 pub struct Hovered;
 
+pub struct DropTarget;
+
+/// component added to both the src and dst entities when src is dropped onto
+/// dst
+pub struct DroppedOnto {
+    src: Entity,
+    dst: Entity,
+}
+
 fn cursor_state(
     mut cursor_events: EventReader<CursorMoved>,
     windows: Res<Windows>,
@@ -65,12 +74,29 @@ fn cursor_state(
 fn hoverable(
     commands: &mut Commands,
     q_cursor_state: Query<&CursorState>,
-    q_hoverable: Query<(Entity, &Transform, &Sprite), (With<Hoverable>, Without<Dragged>)>,
+    q_is_dragged: Query<(), With<Dragged>>,
+    q_hoverable: Query<
+        (
+            Entity,
+            &Transform,
+            &Sprite,
+            Option<&Hoverable>,
+            Option<&DropTarget>,
+        ),
+        (Or<(With<Hoverable>, With<DropTarget>)>, Without<Dragged>),
+    >,
 ) {
     let cursor_state = q_cursor_state.iter().next().unwrap();
+    let is_dragged = q_is_dragged.iter().next().is_some();
 
     if cursor_state.cursor_moved {
-        for (entity, transform, sprite) in q_hoverable.iter() {
+        for (entity, transform, sprite, is_hoverable, is_drop_target) in q_hoverable.iter() {
+            if !is_hoverable.is_some() && is_drop_target.is_some() && !is_dragged {
+                // ignore non-hoverable targets if we're not dragging
+                commands.remove_one::<Hovered>(entity);
+                continue;
+            }
+
             let half_width = sprite.size.x / 2.0;
             let half_height = sprite.size.y / 2.0;
 
@@ -91,7 +117,7 @@ fn material(
     mut materials: ResMut<Assets<ColorMaterial>>,
     q_hoverable: Query<
         (&Handle<ColorMaterial>, Option<&Hovered>, Option<&Dragged>),
-        With<Hoverable>,
+        Or<(With<Hoverable>, With<DropTarget>)>,
     >,
 ) {
     let mut first = true;
@@ -162,8 +188,39 @@ fn drag(q_cursor_state: Query<&CursorState>, mut q_dragged: Query<&mut Transform
     }
 }
 
-fn drop(commands: &mut Commands, mut q_dropped: Query<Entity, Added<Dropped>>) {
+fn drop(
+    commands: &mut Commands,
+    mut q_dropped: Query<Entity, Added<Dropped>>,
+    q_cursor_state: Query<&CursorState>,
+    q_droppable: Query<(Entity, &Transform, &Sprite), (With<DropTarget>, Without<Dragged>)>,
+) {
+    let cursor_state = q_cursor_state.iter().next().unwrap();
+
     for entity in q_dropped.iter_mut() {
+        let mut dropped_onto = None;
+
+        for (entity, transform, sprite) in q_droppable.iter() {
+            let half_width = sprite.size.x / 2.0;
+            let half_height = sprite.size.y / 2.0;
+
+            if transform.translation.x - half_width < cursor_state.cursor_world.x
+                && transform.translation.x + half_width > cursor_state.cursor_world.x
+                && transform.translation.y - half_height < cursor_state.cursor_world.y
+                && transform.translation.y + half_height > cursor_state.cursor_world.y
+            {
+                dropped_onto = Some(entity);
+            }
+        }
+
+        if let Some(dropped_onto) = dropped_onto {
+            commands.insert_one(
+                entity,
+                DroppedOnto {
+                    src: entity,
+                    dst: dropped_onto,
+                },
+            );
+        }
         commands.remove_one::<Dropped>(entity);
     }
 }

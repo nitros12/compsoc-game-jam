@@ -44,5 +44,12 @@ fn setup_ui(
             ..Default::default()
         })
         .with(dragging::Hoverable)
-        .with(dragging::Draggable);
+        .with(dragging::Draggable)
+        .spawn(SpriteBundle {
+            material: materials.add(jam_texture.clone().into()),
+            transform: Transform::from_xyz(50.0, 50.0, 0.0),
+            ..Default::default()
+        })
+        .with(dragging::DropTarget)
+        ;
 }
