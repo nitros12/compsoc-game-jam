@@ -3,6 +3,7 @@ use bevy::prelude::*;
 mod button;
 mod dragging;
 mod shop_scene;
+mod jam;
 
 fn main() {
     App::build()
