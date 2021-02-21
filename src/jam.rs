@@ -124,7 +124,7 @@ pub enum JamIngredient {
 }
 
 impl JamIngredient {
-    fn all() -> &'static [JamIngredient] {
+    pub fn all() -> &'static [JamIngredient] {
         &[
             JamIngredient::Petrol,
             JamIngredient::Urine,
@@ -192,11 +192,11 @@ impl JamIngredient {
         }
     }
 
-    fn asset_for(self, assets: &JamAssets) -> Handle<Texture> {
+    pub fn asset_for(self, assets: &JamAssets) -> Handle<Texture> {
         assets.ingredients.get(&self).unwrap().clone()
     }
 
-    fn name(self) -> &'static str {
+    pub fn name(self) -> &'static str {
         match self {
             JamIngredient::Petrol => "Petrol",
             JamIngredient::Urine => "Urine",
@@ -217,7 +217,7 @@ impl JamIngredient {
         }
     }
 
-    fn effects(self) -> &'static [JamEffect] {
+    pub fn effects(self) -> &'static [JamEffect] {
         match self {
             JamIngredient::Petrol => &[JamEffect::SuperHumanStrength, JamEffect::Flammable],
             JamIngredient::Urine => &[JamEffect::NightVision, JamEffect::HideousLaughter],
@@ -238,7 +238,7 @@ impl JamIngredient {
         }
     }
 
-    fn calculate_effects(effects: &[Self]) -> Vec<JamEffect> {
+    pub fn calculate_effects(effects: &[Self]) -> Vec<JamEffect> {
         let mut seen = HashMap::new();
 
         for effect in effects.iter().flat_map(|i| i.effects()) {
@@ -270,7 +270,7 @@ pub enum JamEffect {
 }
 
 impl JamEffect {
-    fn all() -> &'static [JamEffect] {
+    pub fn all() -> &'static [JamEffect] {
         &[
             JamEffect::NightVision,
             JamEffect::SuperHumanStrength,
@@ -315,11 +315,11 @@ impl JamEffect {
         }
     }
 
-    fn asset_for(self, assets: &JamAssets) -> Handle<Texture> {
+    pub fn asset_for(self, assets: &JamAssets) -> Handle<Texture> {
         assets.effects.get(&self).unwrap().clone()
     }
 
-    fn name(self) -> &'static str {
+    pub fn name(self) -> &'static str {
         match self {
             JamEffect::NightVision => "Night vision",
             JamEffect::SuperHumanStrength => "Super human strength",
@@ -337,7 +337,7 @@ impl JamEffect {
         }
     }
 
-    fn description(self) -> &'static str {
+    pub fn description(self) -> &'static str {
         match self {
             JamEffect::NightVision => "See, in the dark",
             JamEffect::SuperHumanStrength => "HULK! SMASH!",

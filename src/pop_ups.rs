@@ -1,8 +1,12 @@
 use bevy::prelude::*;
 
-use crate::button;
-use crate::gamestate::{GameStage, GameState};
+use crate::jam::JamIngredient;
 use crate::shop_scene;
+use crate::{button, jam::JamAssets};
+use crate::{
+    gamestate::{GameStage, GameState},
+    jam::JamEffect,
+};
 
 pub struct PopUpsPlugin;
 
@@ -86,24 +90,192 @@ fn teardown(
     }
 }
 
-fn spawn_jam_book(commands: &mut Commands, materials: &mut Assets<ColorMaterial>) {
+fn spawn_jam_book(
+    commands: &mut Commands,
+    materials: &mut Assets<ColorMaterial>,
+    asset_server: &AssetServer,
+    jam_assets: &JamAssets,
+) {
     commands
         .spawn(NodeBundle {
             style: Style {
                 size: Size::new(Val::Percent(80.0), Val::Percent(60.0)),
-                justify_content: JustifyContent::FlexStart,
                 position_type: PositionType::Absolute,
                 position: Rect {
                     left: Val::Percent(10.0),
                     top: Val::Percent(10.0),
                     ..Default::default()
                 },
+                padding: Rect::all(Val::Percent(5.0)),
                 ..Default::default()
             },
             material: materials.add(Color::YELLOW_GREEN.into()),
             ..Default::default()
         })
-        .with(JamBook);
+        .with(JamBook)
+        .with_children(|parent| {
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        size: Size::new(Val::Percent(50.0), Val::Percent(100.0)),
+                        flex_direction: FlexDirection::Column,
+                        ..Default::default()
+                    },
+                    material: materials.add(Color::NONE.into()),
+                    ..Default::default()
+                })
+                .with_children(|parent| {
+                    for ingredient in JamIngredient::all() {
+                        parent
+                            .spawn(NodeBundle {
+                                style: Style {
+                                    size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                                    padding: Rect::all(Val::Percent(2.0)),
+                                    ..Default::default()
+                                },
+                                material: materials.add(Color::NONE.into()),
+                                ..Default::default()
+                            })
+                            .with_children(|parent| {
+                                parent.spawn(NodeBundle {
+                                    style: Style {
+                                        size: Size::new(Val::Px(16.0), Val::Px(16.0)),
+                                        ..Default::default()
+                                    },
+                                    material: materials
+                                        .add(ingredient.asset_for(jam_assets).into()),
+                                    ..Default::default()
+                                });
+
+                                parent.spawn(TextBundle {
+                                    style: Style {
+                                        margin: Rect::all(Val::Px(2.0)),
+                                        ..Default::default()
+                                    },
+                                    text: Text::with_section(
+                                        ingredient.name(),
+                                        TextStyle {
+                                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                            font_size: 15.0,
+                                            color: Color::BLACK,
+                                        },
+                                        Default::default(),
+                                    ),
+                                    ..Default::default()
+                                });
+
+                                for effect in ingredient.effects() {
+                                    parent.spawn(NodeBundle {
+                                        style: Style {
+                                            size: Size::new(Val::Px(16.0), Val::Px(16.0)),
+                                            ..Default::default()
+                                        },
+                                        material: materials
+                                            .add(effect.asset_for(jam_assets).into()),
+                                        ..Default::default()
+                                    });
+                                }
+                            });
+                    }
+                });
+
+            parent
+                .spawn(NodeBundle {
+                    style: Style {
+                        size: Size::new(Val::Percent(50.0), Val::Percent(100.0)),
+                        flex_direction: FlexDirection::Column,
+                        ..Default::default()
+                    },
+                    material: materials.add(Color::NONE.into()),
+                    ..Default::default()
+                })
+                .with_children(|parent| {
+                    for effect in JamEffect::all() {
+                        // each effect row
+                        parent
+                            .spawn(NodeBundle {
+                                style: Style {
+                                    //size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                                    flex_direction: FlexDirection::Column,
+                                    padding: Rect::all(Val::Percent(2.0)),
+                                    ..Default::default()
+                                },
+                                material: materials.add(Color::NONE.into()),
+                                ..Default::default()
+                            })
+                            .with_children(|parent| {
+                                // icon, name
+                                parent
+                                    .spawn(NodeBundle {
+                                        style: Style {
+                                            size: Size::new(
+                                                Val::Percent(100.0),
+                                                Val::Percent(100.0),
+                                            ),
+                                            padding: Rect::all(Val::Percent(2.0)),
+                                            ..Default::default()
+                                        },
+                                        material: materials.add(Color::NONE.into()),
+                                        ..Default::default()
+                                    })
+                                    .with_children(|parent| {
+                                        parent.spawn(NodeBundle {
+                                            style: Style {
+                                                size: Size::new(Val::Px(16.0), Val::Px(16.0)),
+                                                ..Default::default()
+                                            },
+                                            material: materials
+                                                .add(effect.asset_for(jam_assets).into()),
+                                            ..Default::default()
+                                        });
+
+                                        parent.spawn(TextBundle {
+                                            style: Style {
+                                                margin: Rect::all(Val::Px(2.0)),
+                                                ..Default::default()
+                                            },
+                                            text: Text::with_section(
+                                                effect.name(),
+                                                TextStyle {
+                                                    font: asset_server
+                                                        .load("fonts/FiraSans-Bold.ttf"),
+                                                    font_size: 15.0,
+                                                    color: Color::BLACK,
+                                                },
+                                                Default::default(),
+                                            ),
+                                            ..Default::default()
+                                        });
+                                    });
+
+                                // description
+                                parent.spawn(TextBundle {
+                                    style: Style {
+                                        align_self: AlignSelf::FlexStart,
+                                        flex_wrap: FlexWrap::Wrap,
+                                        max_size: Size {
+                                            width: Val::Px(200.0),
+                                            height: Val::Percent(100.0),
+                                            ..Default::default()
+                                        },
+                                        margin: Rect::all(Val::Px(2.0)),
+                                        ..Default::default()
+                                    },
+                                    text: Text::with_section(
+                                        effect.description(),
+                                        TextStyle {
+                                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                            font_size: 13.0,
+                                            color: Color::BLACK,
+                                        },
+                                        Default::default(),
+                                    ),
+                                    ..Default::default()
+                                });
+                            });
+                    }
+                });
+        });
 }
 
 fn handle_cauldron_click(
@@ -121,6 +293,8 @@ fn handle_cauldron_click(
 fn handle_jam_book_click(
     commands: &mut Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    asset_server: Res<AssetServer>,
+    jam_assets: Res<JamAssets>,
     q_jambook_button: Query<&JamBookButton>,
     q_jambook: Query<Entity, With<JamBook>>,
     mut event_reader: EventReader<button::ButtonPressedEvent>,
@@ -132,7 +306,7 @@ fn handle_jam_book_click(
         }
 
         if let Ok(JamBookButton) = q_jambook_button.get_component(*entity) {
-            spawn_jam_book(commands, &mut *materials)
+            spawn_jam_book(commands, &mut *materials, &*asset_server, &*jam_assets);
         }
     }
 }

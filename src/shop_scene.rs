@@ -183,6 +183,7 @@ fn setup(
             transform: Transform::from_xyz(0.0, 0.0, 4.0),
             ..Default::default()
         })
+        .with(Background)
         .spawn(SpriteBundle {
             material: materials.add(background_handle.into()),
             ..Default::default()
