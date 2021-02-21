@@ -73,8 +73,9 @@ fn jam_clone_on_drag(
     mut event_reader: EventReader<dragging::DraggedEvent>,
 ) {
     for dragging::DraggedEvent(entity) in event_reader.iter() {
-        let ingredient = q_ingredients.get_component(*entity).unwrap();
-        spawn_ingredient(commands, *ingredient, &*jam_assets, &mut *materials);
+        if let Ok(ingredient) = q_ingredients.get_component(*entity) {
+            spawn_ingredient(commands, *ingredient, &*jam_assets, &mut *materials);
+        }
     }
 }
 
