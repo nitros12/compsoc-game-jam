@@ -307,7 +307,7 @@ fn setup(
         .with(Background)
         .spawn(SpriteSheetBundle {
             texture_atlas: hair_atlas_handle,
-            transform: Transform::from_xyz(0.0, 0.0, 2.1),
+            transform: Transform::from_xyz(0.0, 0.0, 4.0),
             ..Default::default()
         })
         .with(Background)
