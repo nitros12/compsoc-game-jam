@@ -130,9 +130,9 @@ fn average_colours<I: Iterator<Item = Color>>(it: I) -> Color {
 
     if total > 0 {
         Color::rgb(
-            r.sqrt() / total as f32,
-            g.sqrt() / total as f32,
-            b.sqrt() / total as f32,
+            (r / total as f32).sqrt(),
+            (g / total as f32).sqrt(),
+            (b / total as f32).sqrt(),
         )
     } else {
         Color::rgba(0.0, 0.0, 0.0, 0.0)
