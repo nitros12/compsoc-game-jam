@@ -14,6 +14,7 @@ impl Plugin for DragPlugin {
             .add_system_to_stage(CoreStage::PostUpdate, drop.system())
             .add_system_to_stage(CoreStage::PostUpdate, material.system())
             .add_event::<DraggedEvent>()
+            .add_event::<DroppedEvent>()
             .add_event::<DroppedOntoEvent>();
     }
 }
@@ -38,18 +39,20 @@ struct Cursor;
 pub struct Draggable;
 pub struct Dragged;
 pub struct DraggedEvent(pub Entity);
-pub struct Dropped;
+struct Dropped;
 
 pub struct Hoverable;
 pub struct Hovered;
 
 pub struct DropTarget;
 
+pub struct DroppedEvent(pub Entity);
+
 /// component added to both the src and dst entities when src is dropped onto
 /// dst
 pub struct DroppedOntoEvent {
-    src: Entity,
-    dst: Entity,
+    pub src: Entity,
+    pub dst: Entity,
 }
 
 fn cursor_state(
@@ -132,9 +135,11 @@ fn material(
             (1.0, 1.0, 1.0)
         };
 
-        materials.get_mut(material).unwrap().color.set_r(red);
-        materials.get_mut(material).unwrap().color.set_g(green);
-        materials.get_mut(material).unwrap().color.set_a(alpha);
+        if let Some(mat) = materials.get_mut(material) {
+            mat.color.set_r(red);
+            mat.color.set_g(green);
+            mat.color.set_a(alpha);
+        }
     }
 }
 
@@ -191,6 +196,7 @@ fn drag(q_cursor_state: Query<&CursorState>, mut q_dragged: Query<&mut Transform
 fn drop(
     commands: &mut Commands,
     mut ev_dropped_onto: ResMut<Events<DroppedOntoEvent>>,
+    mut ev_dropped: ResMut<Events<DroppedEvent>>,
     mut q_dropped: Query<Entity, Added<Dropped>>,
     q_cursor_state: Query<&CursorState>,
     q_droppable: Query<(Entity, &Transform, &Sprite), (With<DropTarget>, Without<Dragged>)>,
@@ -219,6 +225,7 @@ fn drop(
                 dst: dropped_onto,
             });
         }
+        ev_dropped.send(DroppedEvent(entity));
         commands.remove_one::<Dropped>(entity);
     }
 }

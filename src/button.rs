@@ -1,102 +1,76 @@
 use bevy::prelude::*;
 
-use crate::dragging;
-
 pub struct ButtonPlugin;
 
 impl Plugin for ButtonPlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.init_resource::<ButtonMaterials>()
-            .add_startup_system(setup.system())
-            .add_system(button_system.system());
+        app.add_system(button_system.system())
+            .add_event::<ButtonPressedEvent>();
     }
 }
 
-struct ButtonMaterials {
-    normal: Handle<ColorMaterial>,
-    hovered: Handle<ColorMaterial>,
-    pressed: Handle<ColorMaterial>,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ButtonState {
+    Pressed,
+    Released,
 }
 
-impl FromResources for ButtonMaterials {
-    fn from_resources(resources: &Resources) -> Self {
-        let mut materials = resources.get_mut::<Assets<ColorMaterial>>().unwrap();
-        ButtonMaterials {
-            normal: materials.add(Color::rgb(0.15, 0.15, 0.15).into()),
-            hovered: materials.add(Color::rgb(0.25, 0.25, 0.25).into()),
-            pressed: materials.add(Color::rgb(0.35, 0.75, 0.35).into()),
-        }
+impl Default for ButtonState {
+    fn default() -> Self {
+        ButtonState::Released
     }
 }
+
+pub struct ButtonPressedEvent(pub Entity);
 
 fn button_system(
-    button_materials: Res<ButtonMaterials>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
     mut interaction_query: Query<
-        (&Interaction, &mut Handle<ColorMaterial>, &Children),
+        (
+            Entity,
+            &Interaction,
+            &Handle<ColorMaterial>,
+            &mut ButtonState,
+        ),
         (Mutated<Interaction>, With<Button>),
     >,
-    mut text_query: Query<&mut Text>,
+    mut ev_click: ResMut<Events<ButtonPressedEvent>>,
 ) {
-    for (interaction, mut material, children) in interaction_query.iter_mut() {
-        let mut text = text_query.get_mut(children[0]).unwrap();
+    for (entity, interaction, material, mut state) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Clicked => {
-                text.sections[0].value = "Press".to_string();
-                *material = button_materials.pressed.clone();
+                let c = materials.get_mut(material).unwrap();
+                c.color.set_r(0.6);
+                c.color.set_g(0.6);
+                c.color.set_b(0.6);
             }
             Interaction::Hovered => {
-                text.sections[0].value = "Hover".to_string();
-                *material = button_materials.hovered.clone();
+                let c = materials.get_mut(material).unwrap();
+                c.color.set_r(0.8);
+                c.color.set_g(0.8);
+                c.color.set_b(0.8);
             }
             Interaction::None => {
-                text.sections[0].value = "Button".to_string();
-                *material = button_materials.normal.clone();
+                let c = materials.get_mut(material).unwrap();
+                c.color.set_r(1.0);
+                c.color.set_g(1.0);
+                c.color.set_b(1.0);
             }
         }
-    }
-}
 
-fn setup(
-    commands: &mut Commands,
-    asset_server: Res<AssetServer>,
-    button_materials: Res<ButtonMaterials>,
-) {
-    commands
-        // ui camera
-        .spawn(UiCameraBundle::default())
-        .spawn(ButtonBundle {
-            style: Style {
-                size: Size::new(Val::Px(150.0), Val::Px(65.0)),
-                // center button
-                margin: Rect::all(Val::Auto),
-                // horizontally center child text
-                justify_content: JustifyContent::Center,
-                // vertically center child text
-                align_items: AlignItems::Center,
-                position_type: PositionType::Absolute,
-                position: Rect {
-                    left: Val::Px(10.0),
-                    top: Val::Px(10.0),
-                    ..Default::default()
-                },
-                ..Default::default()
-            },
-            material: button_materials.normal.clone(),
-            ..Default::default()
-        })
-        .with(dragging::Draggable)
-        .with_children(|parent| {
-            parent.spawn(TextBundle {
-                text: Text::with_section(
-                    "Button",
-                    TextStyle {
-                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                        font_size: 40.0,
-                        color: Color::rgb(0.9, 0.9, 0.9),
-                    },
-                    Default::default(),
-                ),
-                ..Default::default()
-            });
-        });
+        match *interaction {
+            Interaction::Clicked if *state == ButtonState::Released => {
+                *state = ButtonState::Pressed;
+            }
+            Interaction::Hovered if *state == ButtonState::Pressed => {
+                *state = ButtonState::Released;
+
+                ev_click.send(ButtonPressedEvent(entity))
+            }
+            _ if *state == ButtonState::Pressed => {
+                *state = ButtonState::Released;
+            }
+            _ => {}
+        }
+    }
 }
