@@ -10,12 +10,18 @@ impl Plugin for ButtonPlugin {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ButtonState {
+pub enum ButtonState {
     Pressed,
     Released,
 }
 
-struct ButtonPressedEvent(Entity);
+impl Default for ButtonState {
+    fn default() -> Self {
+        ButtonState::Released
+    }
+}
+
+pub struct ButtonPressedEvent(pub Entity);
 
 fn button_system(
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -25,13 +31,12 @@ fn button_system(
             &Interaction,
             &Handle<ColorMaterial>,
             &mut ButtonState,
-            &Children,
         ),
         (Mutated<Interaction>, With<Button>),
     >,
     mut ev_click: ResMut<Events<ButtonPressedEvent>>,
 ) {
-    for (entity, interaction, material, mut state, children) in interaction_query.iter_mut() {
+    for (entity, interaction, material, mut state) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Clicked => {
                 let c = materials.get_mut(material).unwrap();
@@ -47,9 +52,9 @@ fn button_system(
             }
             Interaction::None => {
                 let c = materials.get_mut(material).unwrap();
-                c.color.set_r(0.8);
-                c.color.set_g(0.8);
-                c.color.set_b(0.8);
+                c.color.set_r(1.0);
+                c.color.set_g(1.0);
+                c.color.set_b(1.0);
             }
         }
 

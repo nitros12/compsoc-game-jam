@@ -1,12 +1,11 @@
 use bevy::prelude::*;
 use rand::seq::SliceRandom;
 
+use crate::gamestate::{GameStage, GameState};
 use crate::jam;
 use crate::jam::JamEffect;
 
 pub struct ShopScenePlugin;
-
-struct Background;
 
 static PHRASES: &[&[(Option<JamEffect>, &str)]] = &[
     /*Intro*/
@@ -146,10 +145,19 @@ struct Moveable {
 
 impl Plugin for ShopScenePlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.add_startup_system(setup.system())
-            .add_system(animate_sprites.system())
-            .add_system(move_sprites.system())
-            .add_system(gen_story.system());
+        app.on_state_enter(GameStage::Main, GameState::Main, setup.system())
+            .on_state_update(GameStage::Main, GameState::Main, animate_sprites.system())
+            .on_state_update(GameStage::Main, GameState::Main, move_sprites.system())
+            .on_state_update(GameStage::Main, GameState::Main, gen_story.system())
+            .on_state_exit(GameStage::Main, GameState::Main, teardown.system());
+    }
+}
+
+struct Background;
+
+fn teardown(commands: &mut Commands, q_background: Query<Entity, With<Background>>) {
+    for entity in q_background.iter() {
+        commands.despawn(entity);
     }
 }
 
@@ -185,6 +193,7 @@ fn setup(
             end: Vec2::new(420.0, -50.0),
             delay_timer: Timer::from_seconds(15.0, true),
         })
+        .with(Background)
         .spawn(SpriteSheetBundle {
             texture_atlas: buggy_atlas_handle,
             ..Default::default()
@@ -196,6 +205,7 @@ fn setup(
             end: Vec2::new(-520.0, -70.0),
             delay_timer: Timer::from_seconds(40.0, true),
         })
+        .with(Background)
         .spawn(SpriteBundle {
             material: materials.add(shopfront_handle.into()),
             transform: Transform::from_xyz(0.0, 0.0, 3.0),
@@ -234,6 +244,7 @@ fn setup(
             ),
             ..Default::default()
         })
+        .with(Background)
         .with(Timer::from_seconds(5.0, true));
 }
 
