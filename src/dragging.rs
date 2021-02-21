@@ -13,6 +13,7 @@ impl Plugin for DragPlugin {
             .add_system_to_stage(CoreStage::PostUpdate, drag.system())
             .add_system_to_stage(CoreStage::PostUpdate, drop.system())
             .add_system_to_stage(CoreStage::PostUpdate, material.system())
+            .add_system_to_stage(CoreStage::PostUpdate, material_atlas.system())
             .add_event::<DraggedEvent>()
             .add_event::<DroppedEvent>()
             .add_event::<DroppedOntoEvent>();
@@ -79,32 +80,49 @@ fn cursor_state(
 
 fn hoverable(
     commands: &mut Commands,
+    atlas_assets: Res<Assets<TextureAtlas>>,
     q_cursor_state: Query<&CursorState>,
     q_is_dragged: Query<(), With<Dragged>>,
     q_hoverable: Query<
         (
             Entity,
             &Transform,
-            &Sprite,
+            Option<&Sprite>,
+            Option<&Handle<TextureAtlas>>,
             Option<&Hoverable>,
             Option<&DropTarget>,
         ),
-        (Or<(With<Hoverable>, With<DropTarget>)>, Without<Dragged>),
+        (
+            Or<(With<Hoverable>, With<DropTarget>)>,
+            Or<(With<Sprite>, With<Handle<TextureAtlas>>)>,
+            Without<Dragged>,
+        ),
     >,
 ) {
     let cursor_state = q_cursor_state.iter().next().unwrap();
     let is_dragged = q_is_dragged.iter().next().is_some();
 
     if cursor_state.cursor_moved {
-        for (entity, transform, sprite, is_hoverable, is_drop_target) in q_hoverable.iter() {
+        for (entity, transform, sprite, t_atlas, is_hoverable, is_drop_target) in q_hoverable.iter()
+        {
             if !is_hoverable.is_some() && is_drop_target.is_some() && !is_dragged {
                 // ignore non-hoverable targets if we're not dragging
                 commands.remove_one::<Hovered>(entity);
                 continue;
             }
 
-            let half_width = sprite.size.x / 2.0;
-            let half_height = sprite.size.y / 2.0;
+            let (x, y) = if let Some(sprite) = sprite {
+                (sprite.size.x, sprite.size.y)
+            } else if let Some(t_atlas) = t_atlas {
+                let atlas = atlas_assets.get(t_atlas).unwrap();
+
+                (atlas.size.x, atlas.size.y)
+            } else {
+                unreachable!()
+            };
+
+            let half_width = x / 2.0;
+            let half_height = y / 2.0;
 
             if transform.translation.x - half_width < cursor_state.cursor_world.x
                 && transform.translation.x + half_width > cursor_state.cursor_world.x
@@ -140,6 +158,27 @@ fn material(
             mat.color.set_g(green);
             mat.color.set_a(alpha);
         }
+    }
+}
+
+fn material_atlas(
+    mut q_hoverable: Query<
+        (&mut TextureAtlasSprite, Option<&Hovered>, Option<&Dragged>),
+        Or<(With<Hoverable>, With<DropTarget>)>,
+    >,
+) {
+    for (mut material, hovered, dragged) in q_hoverable.iter_mut() {
+        let (red, green, alpha) = if dragged.is_some() {
+            (0.0, 1.0, 1.0)
+        } else if hovered.is_some() {
+            (1.0, 0.0, 1.0)
+        } else {
+            (1.0, 1.0, 1.0)
+        };
+
+        material.color.set_r(red);
+        material.color.set_g(green);
+        material.color.set_a(alpha);
     }
 }
 
@@ -195,20 +234,45 @@ fn drag(q_cursor_state: Query<&CursorState>, mut q_dragged: Query<&mut Transform
 
 fn drop(
     commands: &mut Commands,
+    atlas_assets: Res<Assets<TextureAtlas>>,
     mut ev_dropped_onto: ResMut<Events<DroppedOntoEvent>>,
     mut ev_dropped: ResMut<Events<DroppedEvent>>,
     mut q_dropped: Query<Entity, Added<Dropped>>,
     q_cursor_state: Query<&CursorState>,
-    q_droppable: Query<(Entity, &Transform, &Sprite), (With<DropTarget>, Without<Dragged>)>,
+    q_droppable: Query<
+        (
+            Entity,
+            &Transform,
+            Option<&Sprite>,
+            Option<&Handle<TextureAtlas>>,
+        ),
+        (
+            With<DropTarget>,
+            Without<Dragged>,
+            Or<(With<Sprite>, With<Handle<TextureAtlas>>)>,
+        ),
+    >,
 ) {
     let cursor_state = q_cursor_state.iter().next().unwrap();
 
     for entity in q_dropped.iter_mut() {
         let mut dropped_onto = None;
 
-        for (entity, transform, sprite) in q_droppable.iter() {
-            let half_width = sprite.size.x / 2.0;
-            let half_height = sprite.size.y / 2.0;
+        for (entity, transform, sprite, t_atlas) in q_droppable.iter() {
+            let (x, y) = if let Some(sprite) = sprite {
+                (sprite.size.x, sprite.size.y)
+            } else if let Some(t_atlas) = t_atlas {
+                let atlas = atlas_assets.get(t_atlas).unwrap();
+
+                println!("atlas: {:?}", atlas);
+
+                (atlas.size.x, atlas.size.y)
+            } else {
+                unreachable!()
+            };
+
+            let half_width = x / 2.0;
+            let half_height = y / 2.0;
 
             if transform.translation.x - half_width < cursor_state.cursor_world.x
                 && transform.translation.x + half_width > cursor_state.cursor_world.x

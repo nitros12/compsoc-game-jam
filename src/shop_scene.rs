@@ -301,7 +301,7 @@ fn setup(
         .with(Background)
         .spawn(SpriteBundle {
             material: materials.add(shopfront_handle.into()),
-            transform: Transform::from_xyz(0.0, 0.0, 3.0),
+            transform: Transform::from_xyz(0.0, 0.0, 4.0),
             ..Default::default()
         })
         .with(Background)
@@ -322,7 +322,7 @@ fn setup(
         .with(dragging::DropTarget)
         .spawn(SpriteSheetBundle {
             texture_atlas: face_atlas_handle,
-            transform: Transform::from_xyz(0.0, 0.0, 2.0),
+            transform: Transform::from_xyz(0.0, 0.0, 3.0),
             ..Default::default()
         })
         .with(Background)
