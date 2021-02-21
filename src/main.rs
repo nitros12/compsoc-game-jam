@@ -6,6 +6,7 @@ mod gamestate;
 mod jam;
 mod pop_ups;
 mod shop_scene;
+mod cauldron_scene;
 
 fn main() {
     App::build()
@@ -28,6 +29,7 @@ fn main() {
         .add_plugin(shop_scene::ShopScenePlugin)
         .add_plugin(jam::JamPlugin)
         .add_plugin(pop_ups::PopUpsPlugin)
+        .add_plugin(cauldron_scene::CauldronScenePlugin)
         .add_startup_system(setup_ui.system())
         .run();
 }
