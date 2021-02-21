@@ -48,12 +48,6 @@ fn spawn_ingredient(
     assets: &JamAssets,
     materials: &mut Assets<ColorMaterial>,
 ) {
-    println!(
-        "Spawning {:?} at {:?}",
-        ingredient,
-        ingredient.initial_transform()
-    );
-
     commands
         .spawn(SpriteBundle {
             material: materials.add(ingredient.asset_for(assets).into()),
