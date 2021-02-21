@@ -4,7 +4,6 @@ mod button;
 mod dragging;
 mod jam;
 mod shop_scene;
-mod story_gen;
 
 fn main() {
     App::build()
@@ -19,7 +18,6 @@ fn main() {
         .add_plugin(dragging::DragPlugin)
         .add_plugin(shop_scene::ShopScenePlugin)
         .add_plugin(jam::JamPlugin)
-        .add_plugin(story_gen::StoryGenPlugin)
         .add_startup_system(setup_ui.system())
         .run();
 }
