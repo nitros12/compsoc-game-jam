@@ -7,6 +7,14 @@ use crate::jam::JamEffect;
 
 pub struct ShopScenePlugin;
 
+struct StoryAssets
+{
+    story_timer: Timer,
+    story_text: String,
+}
+
+struct Story;
+
 static PHRASES: &[&[(Option<JamEffect>, &str)]] = &[
     /*Intro*/
     &[
@@ -145,7 +153,8 @@ struct Moveable {
 
 impl Plugin for ShopScenePlugin {
     fn build(&self, app: &mut AppBuilder) {
-        app.on_state_enter(GameStage::Main, GameState::Main, setup.system())
+        app.add_startup_system_to_stage(StartupStage::PreStartup, setup_assets.system())
+            .on_state_enter(GameStage::Main, GameState::Main, setup.system())
             .add_system(move_sprites.system())
             .add_system(animate_sprites.system())
             .add_system(gen_story.system())
@@ -161,11 +170,23 @@ fn teardown(commands: &mut Commands, q_background: Query<Entity, With<Background
     }
 }
 
+fn setup_assets(commands: &mut Commands, asset_server: Res<AssetServer>) {
+    let story_timer = Timer::from_seconds(20.0, true);
+
+    let story_text = "Please familiarise yourself with the book in the bottom left, the game will shortly begin!".to_string();
+
+    commands.insert_resource(StoryAssets {
+        story_timer,
+        story_text,
+    });
+}
+
 fn setup(
     commands: &mut Commands,
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    story_assets: Res<StoryAssets>,
 ) {
     let shopfront_handle = asset_server.load("sprites/front.png");
     let shop_front_shelf_handle = asset_server.load("sprites/frontshelf.png");
@@ -238,7 +259,7 @@ fn setup(
             },
             transform: Transform::from_xyz(0.0, 0.0, 5.0),
             text: Text::with_section(
-                "Read the instructions, the game will start soon!",
+                story_assets.story_text.to_string(),
                 TextStyle {
                     font: asset_server.load("fonts/FiraSans-Bold.ttf"),
                     font_size: 15.0,
@@ -252,7 +273,7 @@ fn setup(
             ..Default::default()
         })
         .with(Background)
-        .with(Timer::from_seconds(5.0, true));
+        .with(Story);
 }
 
 fn animate_sprites(
@@ -294,20 +315,21 @@ fn move_sprites(time: Res<Time>, mut query: Query<(&mut Moveable, &mut Transform
     }
 }
 
-fn gen_story(time: Res<Time>, mut query: Query<(&mut Timer, &mut Text)>) {
-    for (mut timer, mut text) in query.iter_mut() {
-        if !timer.tick(time.delta_seconds()).just_finished() {
+fn gen_story(time: Res<Time>, mut assets: ResMut<StoryAssets>, mut query: Query<(&mut Story, &mut Text)>) {
+    for (mut story, mut text) in query.iter_mut() {
+        if !assets.story_timer.tick(time.delta_seconds()).just_finished() {
             return;
         }
 
         let mut effects = Vec::new();
-        let mut story = String::from("");
+        let mut temp_story = String::from("");
         for x in 0..13 {
             let (effect, text_fragment) = PHRASES[x].choose(&mut rand::thread_rng()).unwrap();
-            story.push_str(text_fragment);
+            temp_story.push_str(text_fragment);
             effects.push(effect);
         }
-        story.push_str("As you can tell, I am in deperate need of assistance, do you have any jam that could help me ensure this doesn't happen again?");
-        text.sections[0].value = format!("{:2}", story)
+        temp_story.push_str("As you can tell, I am in deperate need of assistance, do you have any jam that could help me ensure this doesn't happen again?");
+        assets.story_text = temp_story;
+        text.sections[0].value = format!("{:2}", assets.story_text);
     }
 }
