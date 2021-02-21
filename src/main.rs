@@ -2,9 +2,10 @@ use bevy::prelude::*;
 
 mod button;
 mod dragging;
+mod gamestate;
 mod jam;
-mod shop_scene;
 mod pop_ups;
+mod shop_scene;
 
 fn main() {
     App::build()
@@ -15,7 +16,14 @@ fn main() {
             vsync: true,
             ..Default::default()
         })
+        .add_stage_after(
+            CoreStage::Update,
+            gamestate::GameStage::Main,
+            StateStage::<gamestate::GameState>::default(),
+        )
+        .insert_resource(State::new(gamestate::GameState::Main))
         .add_plugins(DefaultPlugins)
+        .add_plugin(button::ButtonPlugin)
         .add_plugin(dragging::DragPlugin)
         .add_plugin(shop_scene::ShopScenePlugin)
         .add_plugin(jam::JamPlugin)
@@ -26,25 +34,10 @@ fn main() {
 
 fn setup_ui(
     commands: &mut Commands,
-    asset_server: Res<AssetServer>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    // asset_server: Res<AssetServer>,
+    // mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let jam_texture = asset_server.load("sprites/jam_jar.png");
-
     commands
         .spawn(UiCameraBundle::default())
-        .spawn(OrthographicCameraBundle::new_2d())
-        .spawn(SpriteBundle {
-            material: materials.add(jam_texture.clone().into()),
-            transform: Transform::from_xyz(0.0, 0.0, 3.0),
-            ..Default::default()
-        })
-        .with(dragging::Hoverable)
-        .with(dragging::Draggable)
-        .spawn(SpriteBundle {
-            material: materials.add(jam_texture.clone().into()),
-            transform: Transform::from_xyz(50.0, 50.0, 3.0),
-            ..Default::default()
-        })
-        .with(dragging::DropTarget);
+        .spawn(OrthographicCameraBundle::new_2d());
 }

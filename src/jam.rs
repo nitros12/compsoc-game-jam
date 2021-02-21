@@ -3,15 +3,25 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 use crate::dragging;
+use crate::gamestate::{GameStage, GameState};
 
 pub struct JamPlugin;
 
 impl Plugin for JamPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_startup_system_to_stage(StartupStage::PreStartup, setup_assets.system())
-            .add_startup_system(setup_jams.system())
-            .add_system(jam_clone_on_drag.system())
-            .add_system_to_stage(CoreStage::PostUpdate, jam_remove_on_drop.system());
+            .on_state_enter(GameStage::Main, GameState::Cauldron, setup.system())
+            .on_state_update(
+                GameStage::Main,
+                GameState::Cauldron,
+                jam_clone_on_drag.system(),
+            )
+            .on_state_update(
+                GameStage::Main,
+                GameState::Cauldron,
+                jam_remove_on_drop.system(),
+            )
+            .on_state_exit(GameStage::Main, GameState::Cauldron, teardown.system());
     }
 }
 
@@ -32,13 +42,19 @@ fn setup_assets(commands: &mut Commands, asset_server: Res<AssetServer>) {
     });
 }
 
-fn setup_jams(
+fn setup(
     commands: &mut Commands,
     assets: Res<JamAssets>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     for &ingredient in JamIngredient::all() {
         spawn_ingredient(commands, ingredient, &*assets, &mut *materials);
+    }
+}
+
+fn teardown(commands: &mut Commands, q_ingredients: Query<Entity, With<JamIngredient>>) {
+    for entity in q_ingredients.iter() {
+        commands.despawn(entity);
     }
 }
 
