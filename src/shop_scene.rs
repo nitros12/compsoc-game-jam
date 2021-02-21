@@ -19,11 +19,15 @@ struct StoryAssets {
     story_text: String,
     story_requirements: HashSet<JamEffect>,
     story_met: bool,
+    char_move: Timer,
+    char_delay: Timer,
+    char_last_pos: Vec2,
 }
 
 struct Story;
 struct JamJar;
 struct Score(u64);
+struct Character;
 
 static PHRASES: &[&[(Option<JamEffect>, &str)]] = &[
     /*Intro*/
@@ -169,6 +173,7 @@ impl Plugin for ShopScenePlugin {
             .add_startup_system_to_stage(StartupStage::PreStartup, setup_jam_jar_assets.system())
             .on_state_enter(GameStage::Main, GameState::Main, setup.system())
             .add_system(move_sprites.system())
+            .add_system(move_character.system())
             .add_system(animate_sprites.system())
             .add_system(gen_story.system())
             .on_state_update(
@@ -196,7 +201,7 @@ fn teardown(commands: &mut Commands, q_background: Query<Entity, With<Background
 }
 
 fn setup_assets(commands: &mut Commands, asset_server: Res<AssetServer>) {
-    let story_timer = Timer::from_seconds(60.0, true);
+    let story_timer = Timer::from_seconds(30.0, true);
 
     let story_text =
     "Welcome to the Lad's Post-Apocalyptic Jam Store! The aim of the game is simple, satisfy our needy customers! Each customer will have a specific set of effects that they want their order of jam to fulfill, and this will be communicated to you via a story of their escapades! Use the JamBook in the bottom left to determine which ingredients you need to use, and mix those ingredients in the Cauldron Room! Be warned, the customers are impatient!"
@@ -207,6 +212,9 @@ fn setup_assets(commands: &mut Commands, asset_server: Res<AssetServer>) {
         story_text,
         story_requirements: HashSet::new(),
         story_met: true,
+        char_move: Timer::from_seconds(5.0, true),
+        char_delay: Timer::from_seconds(25.0, true),
+        char_last_pos: Vec2::new(620.0, -130.0),
     });
 }
 
@@ -278,10 +286,11 @@ fn setup(
         .with(Background)
         .with(Moveable {
             move_timer: Timer::from_seconds(5.0, true),
-            start: Vec2::new(620.0, -130.0),
+            start: Vec2::new(680.0, -130.0),
             end: Vec2::new(-240.0, -80.0),
-            delay_timer: Timer::from_seconds(50.0, true),
+            delay_timer: Timer::from_seconds(5.0, true),
         })
+        .with(Character)
         .spawn(TextBundle {
             style: Style {
                 align_self: AlignSelf::Center,
@@ -368,8 +377,12 @@ fn animate_sprites(
     }
 }
 
-fn move_sprites(time: Res<Time>, mut query: Query<(&mut Moveable, &mut Transform)>) {
-    for (mut moveable, mut transform) in query.iter_mut() {
+fn move_sprites(
+    time: Res<Time>,
+    mut query: Query<(&mut Moveable, &mut Transform), Without<Character>>
+){
+    for (mut moveable, mut transform) in query.iter_mut()
+    {
         if !moveable
             .move_timer
             .tick(time.delta_seconds())
@@ -392,6 +405,40 @@ fn move_sprites(time: Res<Time>, mut query: Query<(&mut Moveable, &mut Transform
         }
     }
 }
+
+fn move_character(
+    time: Res<Time>,
+    mut assets: ResMut<StoryAssets>,
+    mut query: Query<(&mut Moveable, &mut Transform), With<Character>>
+) {
+    for (mut moveable, mut transform) in query.iter_mut()
+    {
+        if !assets
+            .char_move
+            .tick(time.delta_seconds())
+            .just_finished()
+            && !assets.char_move.paused()
+        {
+            assets.char_last_pos = moveable.start + (moveable.end - moveable.start) * assets.char_move.percent();
+            println!("{:?}", assets.char_move);
+            println!("{:?}", assets.char_last_pos);
+            transform.translation.x = assets.char_last_pos.x;
+            transform.translation.y = assets.char_last_pos.y;
+        } else if !assets
+            .char_delay
+            .tick(time.delta_seconds())
+            .just_finished()
+        {
+            assets.char_move.pause();
+            transform.translation.x = assets.char_last_pos.x;
+            transform.translation.y = assets.char_last_pos.y;
+        } else {
+            assets.char_move.unpause();
+            assets.char_last_pos = Vec2::new(680.0, -180.0);
+        }
+    }
+}
+
 
 fn gen_story(
     time: Res<Time>,
