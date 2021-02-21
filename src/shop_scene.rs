@@ -462,6 +462,10 @@ fn handle_jam_drop(
     mut q_score: Query<(&mut Text, &mut Score)>,
     mut event_reader: EventReader<DroppedOntoEvent>,
 ) {
+    if story.story_met {
+        return;
+    }
+
     for DroppedOntoEvent { src, dst } in event_reader.iter() {
         if let (Ok(JamJar), _) = (q_jam_jar.get_component(*src), ()) {
             let effects = JamIngredient::calculate_effects(&contents.0);
