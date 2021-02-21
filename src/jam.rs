@@ -145,31 +145,31 @@ impl JamIngredient {
         ]
     }
 
-    fn initial_position(self) -> (f32, f32, f32) {
+    fn initial_position(self) -> (f32, f32) {
         match self {
-            JamIngredient::Petrol => (-280.0, 250.0, 6.0),
-            JamIngredient::Urine => (-200.0, 250.0, 7.0),
-            JamIngredient::GunPowder => (-120.0, 250.0, 8.0),
-            JamIngredient::BathWater => (-40.0, 250.0, 9.0),
-            JamIngredient::AppleSeeds => (40.0, 250.0, 10.0),
-            JamIngredient::Strawberries => (120.0, 250.0, 11.0),
-            JamIngredient::Lemons => (200.0, 250.0, 12.0),
-            JamIngredient::Damsons => (280.0, 250.0, 13.0),
+            JamIngredient::Petrol => (-280.0, 250.0),
+            JamIngredient::Urine => (-200.0, 250.0),
+            JamIngredient::GunPowder => (-120.0, 250.0),
+            JamIngredient::BathWater => (-40.0, 250.0),
+            JamIngredient::AppleSeeds => (40.0, 250.0),
+            JamIngredient::Strawberries => (120.0, 250.0),
+            JamIngredient::Lemons => (200.0, 250.0),
+            JamIngredient::Damsons => (280.0, 250.0),
 
-            JamIngredient::HumanFlesh => (-280.0, 170.0, 14.0),
-            JamIngredient::MotorOil => (-200.0, 170.0, 15.0),
-            JamIngredient::Absinth => (-120.0, 170.0, 16.0),
-            JamIngredient::Bleach => (-40.0, 170.0, 17.0),
-            JamIngredient::Sand => (40.0, 170.0, 18.0),
-            JamIngredient::Sugar => (120.0, 170.0, 19.0),
-            JamIngredient::Salt => (200.0, 170.0, 20.0),
-            JamIngredient::Sakura => (280.0, 170.0, 21.0),
+            JamIngredient::HumanFlesh => (-280.0, 170.0),
+            JamIngredient::MotorOil => (-200.0, 170.0),
+            JamIngredient::Absinth => (-120.0, 170.0),
+            JamIngredient::Bleach => (-40.0, 170.0),
+            JamIngredient::Sand => (40.0, 170.0),
+            JamIngredient::Sugar => (120.0, 170.0),
+            JamIngredient::Salt => (200.0, 170.0),
+            JamIngredient::Sakura => (280.0, 170.0),
         }
     }
 
     fn initial_transform(self) -> Transform {
-        let (x, y, z) = self.initial_position();
-        Transform::from_xyz(x, y, z)
+        let (x, y) = self.initial_position();
+        Transform::from_xyz(x, y, 6.0)
     }
 
     fn asset_path(self) -> &'static str {
