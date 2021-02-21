@@ -96,115 +96,47 @@ fn spawn_jam_book(
     asset_server: &AssetServer,
     jam_assets: &JamAssets,
 ) {
+    let recipe_book_handle = asset_server.load("sprites/recipebook.png");
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+
     commands
         .spawn(NodeBundle {
             style: Style {
-                size: Size::new(Val::Percent(80.0), Val::Percent(60.0)),
+                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
                 position_type: PositionType::Absolute,
-                position: Rect {
-                    left: Val::Percent(10.0),
-                    top: Val::Percent(10.0),
-                    ..Default::default()
-                },
-                padding: Rect::all(Val::Percent(5.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
                 ..Default::default()
             },
-            material: materials.add(Color::YELLOW_GREEN.into()),
+            material: materials.add(Color::NONE.into()),
             ..Default::default()
         })
         .with(JamBook)
         .with_children(|parent| {
+            // left side
             parent
                 .spawn(NodeBundle {
                     style: Style {
-                        size: Size::new(Val::Percent(50.0), Val::Percent(100.0)),
-                        flex_direction: FlexDirection::Column,
+                        size: Size::new(Val::Px(400.0 * 1.5), Val::Px(300.0 * 1.5)),
                         ..Default::default()
                     },
-                    material: materials.add(Color::NONE.into()),
+                    material: materials.add(recipe_book_handle.into()),
                     ..Default::default()
                 })
                 .with_children(|parent| {
-                    for ingredient in JamIngredient::all() {
-                        parent
-                            .spawn(NodeBundle {
-                                style: Style {
-                                    size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
-                                    padding: Rect::all(Val::Percent(2.0)),
-                                    ..Default::default()
-                                },
-                                material: materials.add(Color::NONE.into()),
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                size: Size::new(Val::Percent(50.0), Val::Percent(100.0)),
+                                padding: Rect::all(Val::Percent(5.0)),
+                                flex_direction: FlexDirection::Column,
                                 ..Default::default()
-                            })
-                            .with_children(|parent| {
-                                parent.spawn(NodeBundle {
-                                    style: Style {
-                                        size: Size::new(Val::Px(16.0), Val::Px(16.0)),
-                                        ..Default::default()
-                                    },
-                                    material: materials
-                                        .add(ingredient.asset_for(jam_assets).into()),
-                                    ..Default::default()
-                                });
-
-                                parent.spawn(TextBundle {
-                                    style: Style {
-                                        margin: Rect::all(Val::Px(2.0)),
-                                        ..Default::default()
-                                    },
-                                    text: Text::with_section(
-                                        ingredient.name(),
-                                        TextStyle {
-                                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                                            font_size: 15.0,
-                                            color: Color::BLACK,
-                                        },
-                                        Default::default(),
-                                    ),
-                                    ..Default::default()
-                                });
-
-                                for effect in ingredient.effects() {
-                                    parent.spawn(NodeBundle {
-                                        style: Style {
-                                            size: Size::new(Val::Px(16.0), Val::Px(16.0)),
-                                            ..Default::default()
-                                        },
-                                        material: materials
-                                            .add(effect.asset_for(jam_assets).into()),
-                                        ..Default::default()
-                                    });
-                                }
-                            });
-                    }
-                });
-
-            parent
-                .spawn(NodeBundle {
-                    style: Style {
-                        size: Size::new(Val::Percent(50.0), Val::Percent(100.0)),
-                        flex_direction: FlexDirection::Column,
-                        ..Default::default()
-                    },
-                    material: materials.add(Color::NONE.into()),
-                    ..Default::default()
-                })
-                .with_children(|parent| {
-                    for effect in JamEffect::all() {
-                        // each effect row
-                        parent
-                            .spawn(NodeBundle {
-                                style: Style {
-                                    //size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
-                                    flex_direction: FlexDirection::Column,
-                                    padding: Rect::all(Val::Percent(2.0)),
-                                    ..Default::default()
-                                },
-                                material: materials.add(Color::NONE.into()),
-                                ..Default::default()
-                            })
-                            .with_children(|parent| {
-                                // icon, name
+                            },
+                            material: materials.add(Color::NONE.into()),
+                            ..Default::default()
+                        })
+                        .with_children(|parent| {
+                            for ingredient in JamIngredient::all() {
                                 parent
                                     .spawn(NodeBundle {
                                         style: Style {
@@ -213,6 +145,7 @@ fn spawn_jam_book(
                                                 Val::Percent(100.0),
                                             ),
                                             padding: Rect::all(Val::Percent(2.0)),
+                                            flex_direction: FlexDirection::Row,
                                             ..Default::default()
                                         },
                                         material: materials.add(Color::NONE.into()),
@@ -225,7 +158,7 @@ fn spawn_jam_book(
                                                 ..Default::default()
                                             },
                                             material: materials
-                                                .add(effect.asset_for(jam_assets).into()),
+                                                .add(ingredient.asset_for(jam_assets).into()),
                                             ..Default::default()
                                         });
 
@@ -235,10 +168,9 @@ fn spawn_jam_book(
                                                 ..Default::default()
                                             },
                                             text: Text::with_section(
-                                                effect.name(),
+                                                ingredient.name(),
                                                 TextStyle {
-                                                    font: asset_server
-                                                        .load("fonts/FiraSans-Bold.ttf"),
+                                                    font: font.clone(),
                                                     font_size: 15.0,
                                                     color: Color::BLACK,
                                                 },
@@ -246,34 +178,97 @@ fn spawn_jam_book(
                                             ),
                                             ..Default::default()
                                         });
-                                    });
 
-                                // description
-                                parent.spawn(TextBundle {
-                                    style: Style {
-                                        align_self: AlignSelf::FlexStart,
-                                        flex_wrap: FlexWrap::Wrap,
-                                        max_size: Size {
-                                            width: Val::Px(200.0),
-                                            height: Val::Percent(100.0),
+                                        for effect in ingredient.effects() {
+                                            parent.spawn(NodeBundle {
+                                                style: Style {
+                                                    size: Size::new(Val::Px(16.0), Val::Px(16.0)),
+                                                    ..Default::default()
+                                                },
+                                                material: materials
+                                                    .add(effect.asset_for(jam_assets).into()),
+                                                ..Default::default()
+                                            });
+                                        }
+                                    });
+                            }
+                        });
+
+                    // right side
+                    parent
+                        .spawn(NodeBundle {
+                            style: Style {
+                                size: Size::new(Val::Percent(50.0), Val::Percent(100.0)),
+                                padding: Rect::all(Val::Percent(5.0)),
+                                flex_direction: FlexDirection::Column,
+                                ..Default::default()
+                            },
+                            material: materials.add(Color::NONE.into()),
+                            ..Default::default()
+                        })
+                        .with_children(|parent| {
+                            for effect in JamEffect::all() {
+                                parent
+                                    .spawn(NodeBundle {
+                                        style: Style {
+                                            size: Size::new(
+                                                Val::Percent(100.0),
+                                                Val::Percent(100.0),
+                                            ),
                                             ..Default::default()
                                         },
-                                        margin: Rect::all(Val::Px(2.0)),
+                                        material: materials.add(Color::NONE.into()),
                                         ..Default::default()
-                                    },
-                                    text: Text::with_section(
-                                        effect.description(),
-                                        TextStyle {
-                                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                                            font_size: 13.0,
-                                            color: Color::BLACK,
-                                        },
-                                        Default::default(),
-                                    ),
-                                    ..Default::default()
-                                });
-                            });
-                    }
+                                    })
+                                    .with_children(|parent| {
+                                        // icon
+                                        parent.spawn(NodeBundle {
+                                            style: Style {
+                                                size: Size::new(Val::Px(16.0), Val::Px(16.0)),
+                                                align_self: AlignSelf::FlexStart,
+                                                ..Default::default()
+                                            },
+                                            material: materials
+                                                .add(effect.asset_for(jam_assets).into()),
+                                            ..Default::default()
+                                        });
+
+                                        // name
+                                        // description
+                                        parent.spawn(TextBundle {
+                                            style: Style {
+                                                size: Size::new(Val::Px(240.0), Val::Auto),
+                                                ..Default::default()
+                                            },
+                                            text: Text {
+                                                sections: vec![
+                                                    TextSection {
+                                                        value: effect.name().to_string(),
+                                                        style: TextStyle {
+                                                            font: font.clone(),
+                                                            font_size: 12.0,
+                                                            color: Color::BLACK,
+                                                        },
+                                                    },
+                                                    TextSection {
+                                                        value: format!(
+                                                            "\n{}",
+                                                            effect.description()
+                                                        ),
+                                                        style: TextStyle {
+                                                            font: font.clone(),
+                                                            font_size: 10.0,
+                                                            color: Color::BLACK,
+                                                        },
+                                                    },
+                                                ],
+                                                ..Default::default()
+                                            },
+                                            ..Default::default()
+                                        });
+                                    });
+                            }
+                        });
                 });
         });
 }
