@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 
 mod button;
+mod cauldron_scene;
 mod dragging;
 mod gamestate;
 mod jam;
 mod pop_ups;
 mod shop_scene;
-mod cauldron_scene;
 
 fn main() {
     App::build()

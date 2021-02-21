@@ -91,10 +91,13 @@ fn jam_clone_on_drag(
 
 fn jam_remove_on_drop(
     commands: &mut Commands,
-    q_dropped: Query<Entity, (With<JamIngredient>, Added<dragging::Dropped>)>,
+    q_jam_ingredient: Query<&JamIngredient>,
+    mut event_reader: EventReader<dragging::DroppedEvent>,
 ) {
-    for entity in q_dropped.iter() {
-        commands.despawn(entity);
+    for dragging::DroppedEvent(entity) in event_reader.iter() {
+        if let Ok(_) = q_jam_ingredient.get_component::<JamIngredient>(*entity) {
+            commands.despawn(*entity);
+        }
     }
 }
 
@@ -164,6 +167,27 @@ impl JamIngredient {
             JamIngredient::Sugar => (120.0, 170.0),
             JamIngredient::Salt => (200.0, 170.0),
             JamIngredient::Sakura => (280.0, 170.0),
+        }
+    }
+
+    pub fn colour(self) -> Color {
+        match self {
+            JamIngredient::Petrol => Color::rgb_u8(237, 237, 84),
+            JamIngredient::Urine => Color::rgb_u8(255, 172, 0),
+            JamIngredient::GunPowder => Color::rgb_u8(140, 133, 113),
+            JamIngredient::BathWater => Color::rgb_u8(207, 246, 246),
+            JamIngredient::AppleSeeds => Color::rgb_u8(6, 38, 39),
+            JamIngredient::Strawberries => Color::rgb_u8(220, 103, 80),
+            JamIngredient::Lemons => Color::rgb_u8(183, 220, 80),
+            JamIngredient::Damsons => Color::rgb_u8(95, 69, 118),
+            JamIngredient::HumanFlesh => Color::rgb_u8(142, 53, 41),
+            JamIngredient::MotorOil => Color::rgb_u8(18, 37, 25),
+            JamIngredient::Absinth => Color::rgb_u8(0, 234, 82),
+            JamIngredient::Bleach => Color::rgb_u8(7, 171, 247),
+            JamIngredient::Sand => Color::rgb_u8(186, 162, 58),
+            JamIngredient::Sugar => Color::rgb_u8(170, 216, 222),
+            JamIngredient::Salt => Color::rgb_u8(170, 222, 194),
+            JamIngredient::Sakura => Color::rgb_u8(220, 170, 216),
         }
     }
 
