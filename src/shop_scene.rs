@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use bevy::prelude::*;
-use rand::{Rng, seq::SliceRandom};
+use rand::{seq::SliceRandom, Rng};
 
 use crate::cauldron_scene::CauldronContents;
 use crate::jam;
@@ -229,7 +229,7 @@ fn setup_assets(commands: &mut Commands, asset_server: Res<AssetServer>) {
         char_last_pos: Vec2::new(620.0, -130.0),
         hair_idx: 0,
         face_idx: 0,
-        torso_idx: 0
+        torso_idx: 0,
     });
 }
 
@@ -305,7 +305,6 @@ fn setup(
             ..Default::default()
         })
         .with(Background)
-
         .spawn(SpriteSheetBundle {
             texture_atlas: hair_atlas_handle,
             transform: Transform::from_xyz(0.0, 0.0, 2.0),
@@ -321,7 +320,6 @@ fn setup(
         .with(Character)
         .with(Hair)
         .with(dragging::DropTarget)
-
         .spawn(SpriteSheetBundle {
             texture_atlas: face_atlas_handle,
             transform: Transform::from_xyz(0.0, 0.0, 2.0),
@@ -337,7 +335,6 @@ fn setup(
         .with(Character)
         .with(Face)
         .with(dragging::DropTarget)
-
         .spawn(SpriteSheetBundle {
             texture_atlas: torso_atlas_handle,
             transform: Transform::from_xyz(0.0, 0.0, 2.0),
@@ -353,7 +350,6 @@ fn setup(
         .with(Character)
         .with(Torso)
         .with(dragging::DropTarget)
-
         .spawn(TextBundle {
             style: Style {
                 align_self: AlignSelf::Center,
@@ -495,23 +491,24 @@ fn move_character(
         }
     }
 
-    for (mut moveable, mut transform) in query.iter_mut() {
-        if !assets.char_move.tick(time.delta_seconds()).just_finished()
-            && !assets.char_move.paused()
-        {
+    if !assets.char_move.tick(time.delta_seconds()).just_finished() && !assets.char_move.paused() {
+        for (mut moveable, mut transform) in query.iter_mut() {
             assets.char_last_pos =
                 moveable.start + (moveable.end - moveable.start) * assets.char_move.percent();
             transform.translation.x = assets.char_last_pos.x;
             transform.translation.y = assets.char_last_pos.y;
-        } else if !assets.char_delay.tick(time.delta_seconds()).just_finished() {
-            assets.char_move.pause();
+        }
+    } else if !assets.char_delay.tick(time.delta_seconds()).just_finished() {
+        assets.char_move.pause();
+        for (mut moveable, mut transform) in query.iter_mut() {
             transform.translation.x = assets.char_last_pos.x;
             transform.translation.y = assets.char_last_pos.y;
-        } else {
-            assets.char_move.unpause();
-            assets.char_last_pos = Vec2::new(680.0, -180.0);
         }
+    } else {
+        assets.char_move.unpause();
+        assets.char_last_pos = Vec2::new(680.0, -180.0);
     }
+
 }
 
 fn gen_story(
