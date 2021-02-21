@@ -57,8 +57,7 @@ fn spawn_ingredient(
         })
         .with(ingredient)
         .with(dragging::Hoverable)
-        .with(dragging::Draggable)
-        ;
+        .with(dragging::Draggable);
 }
 
 fn jam_clone_on_drag(
@@ -218,22 +217,22 @@ impl JamIngredient {
 
     fn effects(self) -> &'static [JamEffect] {
         match self {
-            JamIngredient::Petrol => &[JamEffect::SuperHumanStrength, JamEffect::Flight],
-            JamIngredient::Urine => &[JamEffect::NightVision],
+            JamIngredient::Petrol => &[JamEffect::SuperHumanStrength, JamEffect::Flammable],
+            JamIngredient::Urine => &[JamEffect::NightVision, JamEffect::HideousLaughter],
             JamIngredient::GunPowder => &[JamEffect::Flight, JamEffect::Speed],
-            JamIngredient::BathWater => &[JamEffect::GreaterHeal, JamEffect::CureAll],
+            JamIngredient::BathWater => &[JamEffect::GreaterHeal, JamEffect::CureDisease],
             JamIngredient::AppleSeeds => &[JamEffect::Poison],
-            JamIngredient::Strawberries => &[JamEffect::CureAll],
+            JamIngredient::Strawberries => &[JamEffect::CureDisease],
             JamIngredient::Lemons => &[JamEffect::GreaterHeal],
-            JamIngredient::Damsons => &[JamEffect::Speed],
-            JamIngredient::HumanFlesh => &[JamEffect::Hunger],
+            JamIngredient::Damsons => &[JamEffect::Flight],
+            JamIngredient::HumanFlesh => &[JamEffect::Hunger, JamEffect::Coagulant],
             JamIngredient::MotorOil => &[JamEffect::Speed, JamEffect::Poison],
-            JamIngredient::Absinth => &[JamEffect::SuperHumanStrength, JamEffect::HideousLaughter],
-            JamIngredient::Bleach => &[JamEffect::Hunger, JamEffect::CureAll],
-            JamIngredient::Sand => &[],
-            JamIngredient::Sugar => &[],
-            JamIngredient::Salt => &[],
-            JamIngredient::Sakura => &[JamEffect::GreaterHeal, JamEffect::CureAll],
+            JamIngredient::Absinth => &[JamEffect::SuperHumanStrength, JamEffect::Flammable],
+            JamIngredient::Bleach => &[JamEffect::Hunger, JamEffect::HideousLaughter],
+            JamIngredient::Sand => &[JamEffect::Coagulant, JamEffect::Antivenom],
+            JamIngredient::Sugar => &[JamEffect::Invisibility],
+            JamIngredient::Salt => &[JamEffect::NightVision],
+            JamIngredient::Sakura => &[JamEffect::Invisibility, JamEffect::Antivenom],
         }
     }
 
@@ -258,7 +257,11 @@ pub enum JamEffect {
     Poison,
     Hunger,
     GreaterHeal,
-    CureAll,
+    CureDisease,
+    Antivenom,
+    Coagulant,
+    Flammable,
+    Invisibility,
     Speed,
     Flight,
     HideousLaughter,
@@ -272,7 +275,11 @@ impl JamEffect {
             JamEffect::Poison,
             JamEffect::Hunger,
             JamEffect::GreaterHeal,
-            JamEffect::CureAll,
+            JamEffect::CureDisease,
+            JamEffect::Antivenom,
+            JamEffect::Coagulant,
+            JamEffect::Flammable,
+            JamEffect::Invisibility,
             JamEffect::Speed,
             JamEffect::Flight,
             JamEffect::HideousLaughter,
@@ -295,7 +302,11 @@ impl JamEffect {
             JamEffect::Poison => "sprites/jambook.png",
             JamEffect::Hunger => "sprites/jambook.png",
             JamEffect::GreaterHeal => "sprites/jambook.png",
-            JamEffect::CureAll => "sprites/jambook.png",
+            JamEffect::CureDisease => "sprites/jambook.png",
+            JamEffect::Antivenom => "sprites/jambook.png",
+            JamEffect::Coagulant => "sprites/jambook.png",
+            JamEffect::Flammable => "sprites/jambook.png",
+            JamEffect::Invisibility => "sprites/jambook.png",
             JamEffect::Speed => "sprites/jambook.png",
             JamEffect::Flight => "sprites/jambook.png",
             JamEffect::HideousLaughter => "sprites/jambook.png",
@@ -313,7 +324,11 @@ impl JamEffect {
             JamEffect::Poison => "Poison",
             JamEffect::Hunger => "Hunger",
             JamEffect::GreaterHeal => "Greater heal",
-            JamEffect::CureAll => "Cure all",
+            JamEffect::CureDisease => "Cure all",
+            JamEffect::Antivenom => "Antivenom",
+            JamEffect::Coagulant => "Coagulant",
+            JamEffect::Flammable => "Flammable",
+            JamEffect::Invisibility => "Invisibility",
             JamEffect::Speed => "Speed",
             JamEffect::Flight => "Flight",
             JamEffect::HideousLaughter => "Hideous laughter",
@@ -327,7 +342,13 @@ impl JamEffect {
             JamEffect::Poison => "You feel ill",
             JamEffect::Hunger => "I am very hungry, give me the butter",
             JamEffect::GreaterHeal => "Your wounds heal and your body feels light",
-            JamEffect::CureAll => "You are granted temporary relief from the radiation poisoning",
+            JamEffect::CureDisease => {
+                "You are granted temporary relief from the radiation poisoning"
+            }
+            JamEffect::Antivenom => "You are cured from all venoms",
+            JamEffect::Coagulant => "Clots blood when applied",
+            JamEffect::Flammable => "Sets fire to anything the jam touches",
+            JamEffect::Invisibility => "Invisibility",
             JamEffect::Speed => "Radiation mutates the cells in your body, you become faster",
             JamEffect::Flight => "Your body fils with energy, so much that you fly?",
             JamEffect::HideousLaughter => {
