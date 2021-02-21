@@ -162,6 +162,7 @@ struct Moveable {
     delay_timer: Timer,
 }
 
+
 impl Plugin for ShopScenePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_startup_system_to_stage(StartupStage::PreStartup, setup_assets.system())
@@ -195,7 +196,7 @@ fn teardown(commands: &mut Commands, q_background: Query<Entity, With<Background
 }
 
 fn setup_assets(commands: &mut Commands, asset_server: Res<AssetServer>) {
-    let story_timer = Timer::from_seconds(20.0, true);
+    let story_timer = Timer::from_seconds(60.0, true);
 
     let story_text =
     "Welcome to the Lad's Post-Apocalyptic Jam Store! The aim of the game is simple, satisfy our needy customers! Each customer will have a specific set of effects that they want their order of jam to fulfill, and this will be communicated to you via a story of their escapades! Use the JamBook in the bottom left to determine which ingredients you need to use, and mix those ingredients in the Cauldron Room! Be warned, the customers are impatient!"
@@ -220,6 +221,7 @@ fn setup(
     let shop_score_handle = asset_server.load("sprites/score_board.png");
     let background_handle = asset_server.load("sprites/background.png");
     let tumbleweed_handle = asset_server.load("sprites/tumbleweedsheet.png");
+    let test_person = asset_server.load("sprites/Woman1.png");
     let tumbleweed_atlas = TextureAtlas::from_grid(tumbleweed_handle, Vec2::new(32.0, 32.0), 4, 1);
     let tumbleweed_atlas_handle = texture_atlases.add(tumbleweed_atlas);
     let buggy_handle = asset_server.load("sprites/buggy-sheet.png");
@@ -268,6 +270,18 @@ fn setup(
             ..Default::default()
         })
         .with(Background)
+        .spawn(SpriteBundle {
+            material: materials.add(test_person.into()),
+            transform: Transform::from_xyz(0.0, 0.0, 2.0),
+            ..Default::default()
+        })
+        .with(Background)
+        .with(Moveable {
+            move_timer: Timer::from_seconds(5.0, true),
+            start: Vec2::new(620.0, -130.0),
+            end: Vec2::new(-240.0, -80.0),
+            delay_timer: Timer::from_seconds(50.0, true),
+        })
         .spawn(TextBundle {
             style: Style {
                 align_self: AlignSelf::Center,
