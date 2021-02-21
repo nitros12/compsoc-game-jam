@@ -12,7 +12,9 @@ impl Plugin for DragPlugin {
             .add_system_to_stage(CoreStage::Update, hoverable.system())
             .add_system_to_stage(CoreStage::PostUpdate, drag.system())
             .add_system_to_stage(CoreStage::PostUpdate, drop.system())
-            .add_system_to_stage(CoreStage::PostUpdate, material.system());
+            .add_system_to_stage(CoreStage::PostUpdate, material.system())
+            .add_event::<DraggedEvent>()
+            .add_event::<DroppedOntoEvent>();
     }
 }
 
@@ -35,6 +37,7 @@ struct Cursor;
 
 pub struct Draggable;
 pub struct Dragged;
+pub struct DraggedEvent(pub Entity);
 pub struct Dropped;
 
 pub struct Hoverable;
@@ -44,7 +47,7 @@ pub struct DropTarget;
 
 /// component added to both the src and dst entities when src is dropped onto
 /// dst
-pub struct DroppedOnto {
+pub struct DroppedOntoEvent {
     src: Entity,
     dst: Entity,
 }
@@ -151,6 +154,7 @@ fn cursor_to_world(window: &Window, cam_transform: &Transform, cursor_pos: Vec2)
 fn draggable(
     commands: &mut Commands,
     i_mouse_button: Res<Input<MouseButton>>,
+    mut ev_dragged: ResMut<Events<DraggedEvent>>,
     mut q_cursor_state: Query<&mut CursorState>,
     q_pressed: Query<(Entity, &Transform), (With<Hovered>, With<Draggable>)>,
     q_released: Query<Entity, With<Dragged>>,
@@ -161,6 +165,7 @@ fn draggable(
             cursor_state.cursor_offset =
                 transform.translation.truncate() - cursor_state.cursor_world;
 
+            ev_dragged.send(DraggedEvent(entity));
             commands.insert_one(entity, Dragged);
         }
     } else if i_mouse_button.just_released(MouseButton::Left) {
@@ -185,6 +190,7 @@ fn drag(q_cursor_state: Query<&CursorState>, mut q_dragged: Query<&mut Transform
 
 fn drop(
     commands: &mut Commands,
+    mut ev_dropped_onto: ResMut<Events<DroppedOntoEvent>>,
     mut q_dropped: Query<Entity, Added<Dropped>>,
     q_cursor_state: Query<&CursorState>,
     q_droppable: Query<(Entity, &Transform, &Sprite), (With<DropTarget>, Without<Dragged>)>,
@@ -208,13 +214,10 @@ fn drop(
         }
 
         if let Some(dropped_onto) = dropped_onto {
-            commands.insert_one(
-                entity,
-                DroppedOnto {
-                    src: entity,
-                    dst: dropped_onto,
-                },
-            );
+            ev_dropped_onto.send(DroppedOntoEvent {
+                src: entity,
+                dst: dropped_onto,
+            });
         }
         commands.remove_one::<Dropped>(entity);
     }

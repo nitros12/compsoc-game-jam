@@ -10,9 +10,8 @@ impl Plugin for JamPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_startup_system_to_stage(StartupStage::PreStartup, setup_assets.system())
             .add_startup_system(setup_jams.system())
-            .add_system_to_stage(CoreStage::PostUpdate, jam_clone_on_drag.system())
-            // .add_system_to_stage(CoreStage::PostUpdate, jam_remove_on_drop.system())
-            ;
+            .add_system(jam_clone_on_drag.system())
+            .add_system_to_stage(CoreStage::PostUpdate, jam_remove_on_drop.system());
     }
 }
 
@@ -49,6 +48,12 @@ fn spawn_ingredient(
     assets: &JamAssets,
     materials: &mut Assets<ColorMaterial>,
 ) {
+    println!(
+        "Spawning {:?} at {:?}",
+        ingredient,
+        ingredient.initial_transform()
+    );
+
     commands
         .spawn(SpriteBundle {
             material: materials.add(ingredient.asset_for(assets).into()),
@@ -64,10 +69,12 @@ fn jam_clone_on_drag(
     commands: &mut Commands,
     jam_assets: Res<JamAssets>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    q_dragged: Query<&JamIngredient, Added<dragging::Dragged>>,
+    q_ingredients: Query<&JamIngredient>,
+    mut event_reader: EventReader<dragging::DraggedEvent>,
 ) {
-    for &ingredient in q_dragged.iter() {
-        spawn_ingredient(commands, ingredient, &*jam_assets, &mut *materials);
+    for dragging::DraggedEvent(entity) in event_reader.iter() {
+        let ingredient = q_ingredients.get_component(*entity).unwrap();
+        spawn_ingredient(commands, *ingredient, &*jam_assets, &mut *materials);
     }
 }
 
@@ -85,7 +92,7 @@ pub struct JamAssets {
     effects: HashMap<JamEffect, Handle<Texture>>,
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub enum JamIngredient {
     Petrol,
     Urine,
