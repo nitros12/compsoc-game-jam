@@ -168,6 +168,7 @@ fn setup(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     let shopfront_handle = asset_server.load("sprites/front.png");
+    let shop_front_shelf_handle = asset_server.load("sprites/frontshelf.png");
     let background_handle = asset_server.load("sprites/background.png");
     let tumbleweed_handle = asset_server.load("sprites/tumbleweedsheet.png");
     let tumbleweed_atlas = TextureAtlas::from_grid(tumbleweed_handle, Vec2::new(32.0, 32.0), 4, 1);
@@ -177,6 +178,11 @@ fn setup(
     let buggy_atlas_handle = texture_atlases.add(buggy_atlas);
 
     commands
+        .spawn(SpriteBundle {
+            material: materials.add(shop_front_shelf_handle.into()),
+            transform: Transform::from_xyz(0.0, 0.0, 4.0),
+            ..Default::default()
+        })
         .spawn(SpriteBundle {
             material: materials.add(background_handle.into()),
             ..Default::default()
