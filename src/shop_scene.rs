@@ -14,6 +14,7 @@ struct StoryAssets
 }
 
 struct Story;
+struct Score;
 
 static PHRASES: &[&[(Option<JamEffect>, &str)]] = &[
     /*Intro*/
@@ -173,7 +174,9 @@ fn teardown(commands: &mut Commands, q_background: Query<Entity, With<Background
 fn setup_assets(commands: &mut Commands, asset_server: Res<AssetServer>) {
     let story_timer = Timer::from_seconds(20.0, true);
 
-    let story_text = "Please familiarise yourself with the book in the bottom left, the game will shortly begin!".to_string();
+    let story_text =
+    "Welcome to the Lad's Post-Apocalyptic Jam Store! The aim of the game is simple, satisfy our needy customers! Each customer will have a specific set of effects that they want their order of jam to fulfill, and this will be communicated to you via a story of their escapades! Use the JamBook in the bottom left to determine which ingredients you need to use, and mix those ingredients in the Cauldron Room! Be warned, the customers are impatient!"
+    .to_string();
 
     commands.insert_resource(StoryAssets {
         story_timer,
@@ -189,7 +192,7 @@ fn setup(
     story_assets: Res<StoryAssets>,
 ) {
     let shopfront_handle = asset_server.load("sprites/front.png");
-    let shop_front_shelf_handle = asset_server.load("sprites/frontshelf.png");
+    let shop_score_handle = asset_server.load("sprites/score_board.png");
     let background_handle = asset_server.load("sprites/background.png");
     let tumbleweed_handle = asset_server.load("sprites/tumbleweedsheet.png");
     let tumbleweed_atlas = TextureAtlas::from_grid(tumbleweed_handle, Vec2::new(32.0, 32.0), 4, 1);
@@ -200,7 +203,7 @@ fn setup(
 
     commands
         .spawn(SpriteBundle {
-            material: materials.add(shop_front_shelf_handle.into()),
+            material: materials.add(shop_score_handle.into()),
             transform: Transform::from_xyz(0.0, 0.0, 4.0),
             ..Default::default()
         })
@@ -273,7 +276,41 @@ fn setup(
             ..Default::default()
         })
         .with(Background)
-        .with(Story);
+        .with(Story)
+        .spawn(TextBundle {
+            style: Style {
+                align_self: AlignSelf::Center,
+                flex_wrap: FlexWrap::Wrap,
+                position_type: PositionType::Absolute,
+                max_size: Size {
+                    width: Val::Px(520.0),
+                    height: Val::Px(100.0),
+                    ..Default::default()
+                },
+                position: Rect {
+                    top: Val::Px(34.0),
+                    right: Val::Px(60.0),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            transform: Transform::from_xyz(0.0, 0.0, 5.0),
+            text: Text::with_section(
+                0.to_string(),
+                TextStyle {
+                    font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                    font_size: 100.0,
+                    color: Color::WHITE,
+                },
+                TextAlignment {
+                    horizontal: HorizontalAlign::Center,
+                    ..Default::default()
+                },
+            ),
+            ..Default::default()
+        })
+        .with(Background)
+        .with(Score);
 }
 
 fn animate_sprites(
