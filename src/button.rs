@@ -62,10 +62,13 @@ fn button_system(
             Interaction::Clicked if *state == ButtonState::Released => {
                 *state = ButtonState::Pressed;
             }
-            _ if *state == ButtonState::Pressed => {
+            Interaction::Hovered if *state == ButtonState::Pressed => {
                 *state = ButtonState::Released;
 
                 ev_click.send(ButtonPressedEvent(entity))
+            }
+            _ if *state == ButtonState::Pressed => {
+                *state = ButtonState::Released;
             }
             _ => {}
         }
