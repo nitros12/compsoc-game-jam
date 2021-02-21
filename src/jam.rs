@@ -124,7 +124,7 @@ pub enum JamIngredient {
 }
 
 impl JamIngredient {
-    fn all() -> &'static [JamIngredient] {
+    pub fn all() -> &'static [JamIngredient] {
         &[
             JamIngredient::Petrol,
             JamIngredient::Urine,
@@ -145,31 +145,31 @@ impl JamIngredient {
         ]
     }
 
-    fn initial_position(self) -> (f32, f32, f32) {
+    fn initial_position(self) -> (f32, f32) {
         match self {
-            JamIngredient::Petrol => (-280.0, 250.0, 6.0),
-            JamIngredient::Urine => (-200.0, 250.0, 7.0),
-            JamIngredient::GunPowder => (-120.0, 250.0, 8.0),
-            JamIngredient::BathWater => (-40.0, 250.0, 9.0),
-            JamIngredient::AppleSeeds => (40.0, 250.0, 10.0),
-            JamIngredient::Strawberries => (120.0, 250.0, 11.0),
-            JamIngredient::Lemons => (200.0, 250.0, 12.0),
-            JamIngredient::Damsons => (280.0, 250.0, 13.0),
+            JamIngredient::Petrol => (-280.0, 250.0),
+            JamIngredient::Urine => (-200.0, 250.0),
+            JamIngredient::GunPowder => (-120.0, 250.0),
+            JamIngredient::BathWater => (-40.0, 250.0),
+            JamIngredient::AppleSeeds => (40.0, 250.0),
+            JamIngredient::Strawberries => (120.0, 250.0),
+            JamIngredient::Lemons => (200.0, 250.0),
+            JamIngredient::Damsons => (280.0, 250.0),
 
-            JamIngredient::HumanFlesh => (-280.0, 170.0, 14.0),
-            JamIngredient::MotorOil => (-200.0, 170.0, 15.0),
-            JamIngredient::Absinth => (-120.0, 170.0, 16.0),
-            JamIngredient::Bleach => (-40.0, 170.0, 17.0),
-            JamIngredient::Sand => (40.0, 170.0, 18.0),
-            JamIngredient::Sugar => (120.0, 170.0, 19.0),
-            JamIngredient::Salt => (200.0, 170.0, 20.0),
-            JamIngredient::Sakura => (280.0, 170.0, 21.0),
+            JamIngredient::HumanFlesh => (-280.0, 170.0),
+            JamIngredient::MotorOil => (-200.0, 170.0),
+            JamIngredient::Absinth => (-120.0, 170.0),
+            JamIngredient::Bleach => (-40.0, 170.0),
+            JamIngredient::Sand => (40.0, 170.0),
+            JamIngredient::Sugar => (120.0, 170.0),
+            JamIngredient::Salt => (200.0, 170.0),
+            JamIngredient::Sakura => (280.0, 170.0),
         }
     }
 
     fn initial_transform(self) -> Transform {
-        let (x, y, z) = self.initial_position();
-        Transform::from_xyz(x, y, z)
+        let (x, y) = self.initial_position();
+        Transform::from_xyz(x, y, 6.0)
     }
 
     fn asset_path(self) -> &'static str {
@@ -193,11 +193,11 @@ impl JamIngredient {
         }
     }
 
-    fn asset_for(self, assets: &JamAssets) -> Handle<Texture> {
+    pub fn asset_for(self, assets: &JamAssets) -> Handle<Texture> {
         assets.ingredients.get(&self).unwrap().clone()
     }
 
-    fn name(self) -> &'static str {
+    pub fn name(self) -> &'static str {
         match self {
             JamIngredient::Petrol => "Petrol",
             JamIngredient::Urine => "Urine",
@@ -218,7 +218,7 @@ impl JamIngredient {
         }
     }
 
-    fn effects(self) -> &'static [JamEffect] {
+    pub fn effects(self) -> &'static [JamEffect] {
         match self {
             JamIngredient::Petrol => &[JamEffect::SuperHumanStrength, JamEffect::Flammable],
             JamIngredient::Urine => &[JamEffect::NightVision, JamEffect::HideousLaughter],
@@ -239,7 +239,7 @@ impl JamIngredient {
         }
     }
 
-    fn calculate_effects(effects: &[Self]) -> Vec<JamEffect> {
+    pub fn calculate_effects(effects: &[Self]) -> Vec<JamEffect> {
         let mut seen = HashMap::new();
 
         for effect in effects.iter().flat_map(|i| i.effects()) {
@@ -271,7 +271,7 @@ pub enum JamEffect {
 }
 
 impl JamEffect {
-    fn all() -> &'static [JamEffect] {
+    pub fn all() -> &'static [JamEffect] {
         &[
             JamEffect::NightVision,
             JamEffect::SuperHumanStrength,
@@ -316,18 +316,18 @@ impl JamEffect {
         }
     }
 
-    fn asset_for(self, assets: &JamAssets) -> Handle<Texture> {
+    pub fn asset_for(self, assets: &JamAssets) -> Handle<Texture> {
         assets.effects.get(&self).unwrap().clone()
     }
 
-    fn name(self) -> &'static str {
+    pub fn name(self) -> &'static str {
         match self {
             JamEffect::NightVision => "Night vision",
             JamEffect::SuperHumanStrength => "Super human strength",
             JamEffect::Poison => "Poison",
             JamEffect::Hunger => "Hunger",
             JamEffect::GreaterHeal => "Greater heal",
-            JamEffect::CureDisease => "Cure all",
+            JamEffect::CureDisease => "Cure Disease",
             JamEffect::Antivenom => "Antivenom",
             JamEffect::Coagulant => "Coagulant",
             JamEffect::Flammable => "Flammable",
@@ -338,21 +338,19 @@ impl JamEffect {
         }
     }
 
-    fn description(self) -> &'static str {
+    pub fn description(self) -> &'static str {
         match self {
             JamEffect::NightVision => "See, in the dark",
             JamEffect::SuperHumanStrength => "HULK! SMASH!",
             JamEffect::Poison => "You feel ill",
             JamEffect::Hunger => "I am very hungry, give me the butter",
             JamEffect::GreaterHeal => "Your wounds heal and your body feels light",
-            JamEffect::CureDisease => {
-                "You are granted temporary relief from the radiation poisoning"
-            }
+            JamEffect::CureDisease => "You are suddenly free from disease",
             JamEffect::Antivenom => "You are cured from all venoms",
             JamEffect::Coagulant => "Clots blood when applied",
             JamEffect::Flammable => "Sets fire to anything the jam touches",
             JamEffect::Invisibility => "Invisibility",
-            JamEffect::Speed => "Radiation mutates the cells in your body, you become faster",
+            JamEffect::Speed => "Radiation blasts your cells, you become faster",
             JamEffect::Flight => "Your body fils with energy, so much that you fly?",
             JamEffect::HideousLaughter => {
                 "You perceive everything as hilariously funny and fall into a fit of laugher."
