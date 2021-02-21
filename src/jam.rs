@@ -147,22 +147,23 @@ impl JamIngredient {
 
     fn initial_position(self) -> (f32, f32, f32) {
         match self {
-            JamIngredient::Petrol => (-250.0, 50.0, 6.0),
-            JamIngredient::Urine => (-230.0, 50.0, 7.0),
-            JamIngredient::GunPowder => (-210.0, 50.0, 8.0),
-            JamIngredient::BathWater => (-190.0, 50.0, 9.0),
-            JamIngredient::AppleSeeds => (-170.0, 50.0, 10.0),
-            JamIngredient::Strawberries => (-150.0, 50.0, 11.0),
-            JamIngredient::Lemons => (-130.0, 50.0, 12.0),
-            JamIngredient::Damsons => (-110.0, 50.0, 13.0),
-            JamIngredient::HumanFlesh => (-90.0, 50.0, 14.0),
-            JamIngredient::MotorOil => (-70.0, 50.0, 15.0),
-            JamIngredient::Absinth => (-50.0, 50.0, 16.0),
-            JamIngredient::Bleach => (-30.0, 50.0, 17.0),
-            JamIngredient::Sand => (-10.0, 50.0, 18.0),
-            JamIngredient::Sugar => (10.0, 50.0, 19.0),
-            JamIngredient::Salt => (30.0, 50.0, 20.0),
-            JamIngredient::Sakura => (50.0, 50.0, 21.0),
+            JamIngredient::Petrol => (-280.0, 250.0, 6.0),
+            JamIngredient::Urine => (-200.0, 250.0, 7.0),
+            JamIngredient::GunPowder => (-120.0, 250.0, 8.0),
+            JamIngredient::BathWater => (-40.0, 250.0, 9.0),
+            JamIngredient::AppleSeeds => (40.0, 250.0, 10.0),
+            JamIngredient::Strawberries => (120.0, 250.0, 11.0),
+            JamIngredient::Lemons => (200.0, 250.0, 12.0),
+            JamIngredient::Damsons => (280.0, 250.0, 13.0),
+
+            JamIngredient::HumanFlesh => (-280.0, 170.0, 14.0),
+            JamIngredient::MotorOil => (-200.0, 170.0, 15.0),
+            JamIngredient::Absinth => (-120.0, 170.0, 16.0),
+            JamIngredient::Bleach => (-40.0, 170.0, 17.0),
+            JamIngredient::Sand => (40.0, 170.0, 18.0),
+            JamIngredient::Sugar => (120.0, 170.0, 19.0),
+            JamIngredient::Salt => (200.0, 170.0, 20.0),
+            JamIngredient::Sakura => (280.0, 170.0, 21.0),
         }
     }
 
