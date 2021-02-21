@@ -956,6 +956,7 @@ name = "compsoc-game-jam"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "rand",
 ]
 
 [[package]]

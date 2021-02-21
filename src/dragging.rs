@@ -120,16 +120,11 @@ fn material(
         Or<(With<Hoverable>, With<DropTarget>)>,
     >,
 ) {
-    let mut first = true;
-
     for (material, hovered, dragged) in q_hoverable.iter() {
         let (red, green, alpha) = if dragged.is_some() {
             (0.0, 1.0, 1.0)
-        } else if first && hovered.is_some() {
-            first = false;
-            (1.0, 0.0, 1.0)
         } else if hovered.is_some() {
-            (1.0, 1.0, 0.5)
+            (1.0, 0.0, 1.0)
         } else {
             (1.0, 1.0, 1.0)
         };
