@@ -4,6 +4,7 @@ mod button;
 mod dragging;
 mod jam;
 mod shop_scene;
+mod pop_ups;
 
 fn main() {
     App::build()
@@ -18,6 +19,7 @@ fn main() {
         .add_plugin(dragging::DragPlugin)
         .add_plugin(shop_scene::ShopScenePlugin)
         .add_plugin(jam::JamPlugin)
+        .add_plugin(pop_ups::PopUpsPlugin)
         .add_startup_system(setup_ui.system())
         .run();
 }
