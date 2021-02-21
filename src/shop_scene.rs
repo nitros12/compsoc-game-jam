@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use bevy::prelude::*;
-use rand::seq::SliceRandom;
+use rand::{Rng, seq::SliceRandom};
 
 use crate::cauldron_scene::CauldronContents;
 use crate::jam;
@@ -22,12 +22,19 @@ struct StoryAssets {
     char_move: Timer,
     char_delay: Timer,
     char_last_pos: Vec2,
+    hair_idx: u32,
+    face_idx: u32,
+    torso_idx: u32,
 }
 
 struct Story;
 struct JamJar;
 struct Score;
 struct Character;
+
+struct Hair;
+struct Face;
+struct Torso;
 
 struct PlayerScore(u64);
 
@@ -220,6 +227,9 @@ fn setup_assets(commands: &mut Commands, asset_server: Res<AssetServer>) {
         char_move: Timer::from_seconds(5.0, true),
         char_delay: Timer::from_seconds(25.0, true),
         char_last_pos: Vec2::new(620.0, -130.0),
+        hair_idx: 0,
+        face_idx: 0,
+        torso_idx: 0
     });
 }
 
@@ -234,12 +244,24 @@ fn setup(
     let shop_score_handle = asset_server.load("sprites/score_board.png");
     let background_handle = asset_server.load("sprites/background.png");
     let tumbleweed_handle = asset_server.load("sprites/tumbleweedsheet.png");
-    let test_person = asset_server.load("sprites/Woman1.png");
+
     let tumbleweed_atlas = TextureAtlas::from_grid(tumbleweed_handle, Vec2::new(32.0, 32.0), 4, 1);
     let tumbleweed_atlas_handle = texture_atlases.add(tumbleweed_atlas);
     let buggy_handle = asset_server.load("sprites/buggy-sheet.png");
     let buggy_atlas = TextureAtlas::from_grid(buggy_handle, Vec2::new(128.0, 64.0), 4, 1);
     let buggy_atlas_handle = texture_atlases.add(buggy_atlas);
+
+    let hair_handle = asset_server.load("sprites/hair-sheet.png");
+    let hair_atlas = TextureAtlas::from_grid(hair_handle, Vec2::new(100.0, 100.0), 10, 1);
+    let hair_atlas_handle = texture_atlases.add(hair_atlas);
+
+    let face_handle = asset_server.load("sprites/face-sheet.png");
+    let face_atlas = TextureAtlas::from_grid(face_handle, Vec2::new(100.0, 100.0), 10, 1);
+    let face_atlas_handle = texture_atlases.add(face_atlas);
+
+    let torso_handle = asset_server.load("sprites/clothing-sheet.png");
+    let torso_atlas = TextureAtlas::from_grid(torso_handle, Vec2::new(100.0, 100.0), 10, 1);
+    let torso_atlas_handle = texture_atlases.add(torso_atlas);
 
     commands
         .spawn(SpriteBundle {
@@ -283,8 +305,9 @@ fn setup(
             ..Default::default()
         })
         .with(Background)
-        .spawn(SpriteBundle {
-            material: materials.add(test_person.into()),
+
+        .spawn(SpriteSheetBundle {
+            texture_atlas: hair_atlas_handle,
             transform: Transform::from_xyz(0.0, 0.0, 2.0),
             ..Default::default()
         })
@@ -293,10 +316,44 @@ fn setup(
             move_timer: Timer::from_seconds(5.0, true),
             start: Vec2::new(680.0, -130.0),
             end: Vec2::new(-240.0, -80.0),
-            delay_timer: Timer::from_seconds(5.0, true),
+            delay_timer: Timer::from_seconds(25.0, true),
         })
         .with(Character)
+        .with(Hair)
         .with(dragging::DropTarget)
+
+        .spawn(SpriteSheetBundle {
+            texture_atlas: face_atlas_handle,
+            transform: Transform::from_xyz(0.0, 0.0, 2.0),
+            ..Default::default()
+        })
+        .with(Background)
+        .with(Moveable {
+            move_timer: Timer::from_seconds(5.0, true),
+            start: Vec2::new(680.0, -130.0),
+            end: Vec2::new(-240.0, -80.0),
+            delay_timer: Timer::from_seconds(25.0, true),
+        })
+        .with(Character)
+        .with(Face)
+        .with(dragging::DropTarget)
+
+        .spawn(SpriteSheetBundle {
+            texture_atlas: torso_atlas_handle,
+            transform: Transform::from_xyz(0.0, 0.0, 2.0),
+            ..Default::default()
+        })
+        .with(Background)
+        .with(Moveable {
+            move_timer: Timer::from_seconds(5.0, true),
+            start: Vec2::new(680.0, -130.0),
+            end: Vec2::new(-240.0, -80.0),
+            delay_timer: Timer::from_seconds(25.0, true),
+        })
+        .with(Character)
+        .with(Torso)
+        .with(dragging::DropTarget)
+
         .spawn(TextBundle {
             style: Style {
                 align_self: AlignSelf::Center,
@@ -414,8 +471,30 @@ fn move_sprites(
 fn move_character(
     time: Res<Time>,
     mut assets: ResMut<StoryAssets>,
+    q_hair: Query<Entity, With<Hair>>,
+    q_face: Query<Entity, With<Face>>,
+    q_torso: Query<Entity, With<Torso>>,
+    mut q_ta: Query<&mut TextureAtlasSprite>,
     mut query: Query<(&mut Moveable, &mut Transform), With<Character>>,
 ) {
+    for entity in q_hair.iter() {
+        if let Ok(mut tas) = q_ta.get_component_mut::<TextureAtlasSprite>(entity) {
+            tas.index = assets.hair_idx;
+        }
+    }
+
+    for entity in q_face.iter() {
+        if let Ok(mut tas) = q_ta.get_component_mut::<TextureAtlasSprite>(entity) {
+            tas.index = assets.face_idx;
+        }
+    }
+
+    for entity in q_torso.iter() {
+        if let Ok(mut tas) = q_ta.get_component_mut::<TextureAtlasSprite>(entity) {
+            tas.index = assets.torso_idx;
+        }
+    }
+
     for (mut moveable, mut transform) in query.iter_mut() {
         if !assets.char_move.tick(time.delta_seconds()).just_finished()
             && !assets.char_move.paused()
@@ -463,6 +542,10 @@ fn gen_story(
         assets.story_requirements = effects.into_iter().cloned().collect();
         assets.story_met = false;
         text.sections[0].value = format!("{:2}", assets.story_text);
+
+        assets.hair_idx = rand::thread_rng().gen_range(0..10);
+        assets.face_idx = rand::thread_rng().gen_range(0..10);
+        assets.torso_idx = rand::thread_rng().gen_range(0..10);
     }
 }
 
