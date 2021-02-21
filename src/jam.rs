@@ -326,7 +326,7 @@ impl JamEffect {
             JamEffect::Poison => "Poison",
             JamEffect::Hunger => "Hunger",
             JamEffect::GreaterHeal => "Greater heal",
-            JamEffect::CureDisease => "Cure all",
+            JamEffect::CureDisease => "Cure Disease",
             JamEffect::Antivenom => "Antivenom",
             JamEffect::Coagulant => "Coagulant",
             JamEffect::Flammable => "Flammable",
@@ -344,14 +344,12 @@ impl JamEffect {
             JamEffect::Poison => "You feel ill",
             JamEffect::Hunger => "I am very hungry, give me the butter",
             JamEffect::GreaterHeal => "Your wounds heal and your body feels light",
-            JamEffect::CureDisease => {
-                "You are granted temporary relief from the radiation poisoning"
-            }
+            JamEffect::CureDisease => "You are suddenly free from disease",
             JamEffect::Antivenom => "You are cured from all venoms",
             JamEffect::Coagulant => "Clots blood when applied",
             JamEffect::Flammable => "Sets fire to anything the jam touches",
             JamEffect::Invisibility => "Invisibility",
-            JamEffect::Speed => "Radiation mutates the cells in your body, you become faster",
+            JamEffect::Speed => "Radiation blasts your cells, you become faster",
             JamEffect::Flight => "Your body fils with energy, so much that you fly?",
             JamEffect::HideousLaughter => {
                 "You perceive everything as hilariously funny and fall into a fit of laugher."

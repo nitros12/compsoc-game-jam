@@ -225,7 +225,6 @@ fn spawn_jam_book(
                                         parent.spawn(NodeBundle {
                                             style: Style {
                                                 size: Size::new(Val::Px(16.0), Val::Px(16.0)),
-                                                align_self: AlignSelf::FlexStart,
                                                 ..Default::default()
                                             },
                                             material: materials
@@ -237,7 +236,7 @@ fn spawn_jam_book(
                                         // description
                                         parent.spawn(TextBundle {
                                             style: Style {
-                                                size: Size::new(Val::Px(240.0), Val::Auto),
+                                                max_size: Size::new(Val::Px(220.0), Val::Undefined),
                                                 ..Default::default()
                                             },
                                             text: Text {
@@ -246,7 +245,7 @@ fn spawn_jam_book(
                                                         value: effect.name().to_string(),
                                                         style: TextStyle {
                                                             font: font.clone(),
-                                                            font_size: 12.0,
+                                                            font_size: 14.0,
                                                             color: Color::BLACK,
                                                         },
                                                     },
@@ -257,7 +256,7 @@ fn spawn_jam_book(
                                                         ),
                                                         style: TextStyle {
                                                             font: font.clone(),
-                                                            font_size: 10.0,
+                                                            font_size: 11.0,
                                                             color: Color::BLACK,
                                                         },
                                                     },
