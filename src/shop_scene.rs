@@ -26,8 +26,10 @@ struct StoryAssets {
 
 struct Story;
 struct JamJar;
-struct Score(u64);
+struct Score;
 struct Character;
+
+struct PlayerScore(u64);
 
 static PHRASES: &[&[(Option<JamEffect>, &str)]] = &[
     /*Intro*/
@@ -121,7 +123,10 @@ static PHRASES: &[&[(Option<JamEffect>, &str)]] = &[
         (None, "turned and ran away, "),
         (None, "offered them a truce, "),
         (None, "told them to surrender, "),
-        (Some(JamEffect::HideousLaughter), "tried to diffuse the situation with a joke ")
+        (
+            Some(JamEffect::HideousLaughter),
+            "tried to diffuse the situation with a joke ",
+        ),
     ],
     /*belonging*/
     &[
@@ -166,7 +171,6 @@ struct Moveable {
     delay_timer: Timer,
 }
 
-
 impl Plugin for ShopScenePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_startup_system_to_stage(StartupStage::PreStartup, setup_assets.system())
@@ -188,7 +192,8 @@ impl Plugin for ShopScenePlugin {
             )
             .on_state_update(GameStage::Main, GameState::Main, handle_jam_drop.system())
             .on_state_update(GameStage::Main, GameState::Main, recolour_jam_jar.system())
-            .on_state_exit(GameStage::Main, GameState::Main, teardown.system());
+            .on_state_exit(GameStage::Main, GameState::Main, teardown.system())
+            .insert_resource(PlayerScore(0));
     }
 }
 
@@ -291,6 +296,7 @@ fn setup(
             delay_timer: Timer::from_seconds(5.0, true),
         })
         .with(Character)
+        .with(dragging::DropTarget)
         .spawn(TextBundle {
             style: Style {
                 align_self: AlignSelf::Center,
@@ -379,10 +385,9 @@ fn animate_sprites(
 
 fn move_sprites(
     time: Res<Time>,
-    mut query: Query<(&mut Moveable, &mut Transform), Without<Character>>
-){
-    for (mut moveable, mut transform) in query.iter_mut()
-    {
+    mut query: Query<(&mut Moveable, &mut Transform), Without<Character>>,
+) {
+    for (mut moveable, mut transform) in query.iter_mut() {
         if !moveable
             .move_timer
             .tick(time.delta_seconds())
@@ -409,26 +414,17 @@ fn move_sprites(
 fn move_character(
     time: Res<Time>,
     mut assets: ResMut<StoryAssets>,
-    mut query: Query<(&mut Moveable, &mut Transform), With<Character>>
+    mut query: Query<(&mut Moveable, &mut Transform), With<Character>>,
 ) {
-    for (mut moveable, mut transform) in query.iter_mut()
-    {
-        if !assets
-            .char_move
-            .tick(time.delta_seconds())
-            .just_finished()
+    for (mut moveable, mut transform) in query.iter_mut() {
+        if !assets.char_move.tick(time.delta_seconds()).just_finished()
             && !assets.char_move.paused()
         {
-            assets.char_last_pos = moveable.start + (moveable.end - moveable.start) * assets.char_move.percent();
-            println!("{:?}", assets.char_move);
-            println!("{:?}", assets.char_last_pos);
+            assets.char_last_pos =
+                moveable.start + (moveable.end - moveable.start) * assets.char_move.percent();
             transform.translation.x = assets.char_last_pos.x;
             transform.translation.y = assets.char_last_pos.y;
-        } else if !assets
-            .char_delay
-            .tick(time.delta_seconds())
-            .just_finished()
-        {
+        } else if !assets.char_delay.tick(time.delta_seconds()).just_finished() {
             assets.char_move.pause();
             transform.translation.x = assets.char_last_pos.x;
             transform.translation.y = assets.char_last_pos.y;
@@ -438,7 +434,6 @@ fn move_character(
         }
     }
 }
-
 
 fn gen_story(
     time: Res<Time>,
@@ -517,10 +512,12 @@ fn jam_jar_remove_on_drop(
 }
 
 fn handle_jam_drop(
+    mut score: ResMut<PlayerScore>,
     contents: Res<CauldronContents>,
     mut story: ResMut<StoryAssets>,
     q_jam_jar: Query<&JamJar>,
-    mut q_score: Query<(&mut Text, &mut Score)>,
+    q_character: Query<&Character>,
+    mut q_score: Query<&mut Text, With<Score>>,
     mut event_reader: EventReader<DroppedOntoEvent>,
 ) {
     if story.story_met {
@@ -528,19 +525,26 @@ fn handle_jam_drop(
     }
 
     for DroppedOntoEvent { src, dst } in event_reader.iter() {
-        if let (Ok(JamJar), _) = (q_jam_jar.get_component(*src), ()) {
+        if let (Ok(JamJar), Ok(Character)) = (
+            q_jam_jar.get_component(*src),
+            q_character.get_component(*dst),
+        ) {
             let effects = JamIngredient::calculate_effects(&contents.0);
 
             if story.story_requirements.is_subset(&effects) {
                 story.story_met = true;
+                score.0 += 1;
 
-                for (mut text, mut score) in q_score.iter_mut() {
-                    score.0 += 1;
+                for mut text in q_score.iter_mut() {
                     text.sections[0].value = score.0.to_string();
                 }
             }
 
-            // TODO: make client go away
+            let duration = story.char_delay.duration();
+            story.char_delay.set_elapsed(duration);
+
+            let duration = story.story_timer.duration();
+            story.story_timer.set_elapsed(duration);
         }
     }
 }

@@ -271,13 +271,13 @@ impl JamIngredient {
         }
 
         seen.into_iter()
-            .filter(|(_k, v)| *v > 2)
+            .filter(|(_k, v)| *v > 1)
             .map(|(k, _)| *k)
             .collect()
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum JamEffect {
     NightVision,
     SuperHumanStrength,
