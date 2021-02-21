@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, ui::FocusPolicy};
 
 use crate::jam::JamIngredient;
 use crate::shop_scene;
@@ -112,6 +112,7 @@ fn spawn_jam_book(
             ..Default::default()
         })
         .with(JamBook)
+        .with(FocusPolicy::Pass)
         .with_children(|parent| {
             // left side
             parent
