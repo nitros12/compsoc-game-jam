@@ -117,6 +117,7 @@ static PHRASES: &[&[(Option<JamEffect>, &str)]] = &[
         (None, "turned and ran away, "),
         (None, "offered them a truce, "),
         (None, "told them to surrender, "),
+        (Some(JamEffect::HideousLaughter), "tried to diffuse the situation with a joke ")
     ],
     /*belonging*/
     &[
