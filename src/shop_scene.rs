@@ -64,8 +64,8 @@ fn setup(
         .with(Timer::from_seconds(0.1, true))
         .with(Moveable{
             move_timer: Timer::from_seconds(5.0, true),
-            start: Vec2::new(420.0, -70.0),
-            end: Vec2::new(-420.0, -70.0),
+            start: Vec2::new(520.0, -70.0),
+            end: Vec2::new(-520.0, -70.0),
             delay_timer: Timer::from_seconds(40.0, true),
         })
 
