@@ -9,7 +9,9 @@ pub struct CauldronScenePlugin;
 struct Background;
 struct Cauldron;
 struct CauldronContent;
-struct Return;
+
+struct ReturnButton;
+struct ClearButton;
 
 impl Plugin for CauldronScenePlugin {
     fn build(&self, app: &mut AppBuilder) {
@@ -28,6 +30,11 @@ impl Plugin for CauldronScenePlugin {
                 GameStage::Main,
                 GameState::Cauldron,
                 handle_content_drop.system(),
+            )
+            .on_state_update(
+                GameStage::Main,
+                GameState::Cauldron,
+                handle_clear_click.system(),
             )
             .on_state_exit(GameStage::Main, GameState::Cauldron, teardown.system())
             .insert_resource(CauldronContents(vec![]));
@@ -86,7 +93,7 @@ fn setup(
         .with(Background)
         .with(CauldronContent)
         .spawn(ButtonBundle {
-            material: materials.add(return_handle.into()),
+            material: materials.add(return_handle.clone().into()),
             style: Style {
                 size: Size::new(Val::Px(128.0), Val::Px(128.0)),
                 position_type: PositionType::Absolute,
@@ -100,18 +107,48 @@ fn setup(
             ..Default::default()
         })
         .with(button::ButtonState::default())
-        .with(Return)
-        .with(Background);
+        .with(ReturnButton)
+        .with(Background)
+        .spawn(ButtonBundle {
+            material: materials.add(return_handle.into()),
+            style: Style {
+                size: Size::new(Val::Px(128.0), Val::Px(128.0)),
+                position_type: PositionType::Absolute,
+                position: Rect {
+                    bottom: Val::Px(40.0 + 128.0),
+                    right: Val::Px(20.0),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .with(button::ButtonState::default())
+        .with(ClearButton)
+        .with(Background)
+        ;
 }
 
 fn handle_return_click(
     mut state: ResMut<State<GameState>>,
-    q_return: Query<&Return>,
+    q_return: Query<&ReturnButton>,
     mut event_reader: EventReader<button::ButtonPressedEvent>,
 ) {
     for button::ButtonPressedEvent(entity) in event_reader.iter() {
-        if let Ok(Return) = q_return.get_component(*entity) {
+        if let Ok(ReturnButton) = q_return.get_component(*entity) {
             state.set_next(GameState::Main).unwrap();
+        }
+    }
+}
+
+fn handle_clear_click(
+    mut contents: ResMut<CauldronContents>,
+    q_clear: Query<&ClearButton>,
+    mut event_reader: EventReader<button::ButtonPressedEvent>,
+) {
+    for button::ButtonPressedEvent(entity) in event_reader.iter() {
+        if let Ok(ClearButton) = q_clear.get_component(*entity) {
+            contents.0.clear();
         }
     }
 }
