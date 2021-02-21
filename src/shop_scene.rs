@@ -6,18 +6,18 @@ pub struct ShopScenePlugin;
 struct Background;
 
 static PHRASES: &[&[&str]] = &[
-/*Intro*/    &["HUNGER I was scavenging for food when", "The other day, ", "In a firefight, ", "Before the war, "],
-/*Villain*/  &["STRENGTH a raider far stronger than me", "a rival gang ", "ANTI-VENOM a mutated snake with potent venom", "an Old War soldier ", "an enemy fuel convoy", "CURE DISEASE a feral dog, riddled with diseases, "],
+/*Intro*/    &["HUNGER I was scavenging for food when ", "The other day, ", "In a firefight, ", "Before the war, "],
+/*Villain*/  &["STRENGTH a raider far stronger than me ", "a rival gang ", "ANTI-VENOM a mutated snake with potent venom ", "an Old War soldier ", "an enemy fuel convoy ", "CURE DISEASE a feral dog, riddled with diseases, "],
 /*Adjective*/&["angrily ", "furiously ", "violently ", "suddenly "],
 /*Action*/   &["COAGULANT stabbed ", "robbed ", "destroyed ", "hunted ", "shot at "],
 /*Hero*/     &["my raiding party ", "me ", "my war-dog ", "SPEED my armoured truck, leaving me slow, ", "HUNGER my food supplies "],
-/*joining*/  &["whilst I was ", "when I was ", "after I was caught", "for "],
+/*joining*/  &["whilst I was ", "when I was ", "after I was caught ", "for "],
 /*Action*/   &["INVISIBILTY trying to steal ", "destroying ", "SPEED escaping with ", "running over ", "gambling away ", "POISON poisoning "],
-/*belonging*/&["their water supply, ", "their supplies, ", "their credits, ", "their jam, ", "FLAMMABLE their fuel, ", "their Old World relics, ", "FLIGHT their pre-war iron bird"],
+/*belonging*/&["their water supply, ", "their supplies, ", "their credits, ", "their jam, ", "FLAMMABLE their fuel, ", "their Old World relics, ", "FLIGHT their pre-war iron bird "],
 /*belonging*/&["so we ", "so I ", "and then I ", "and then we "],
 /*belonging*/&["engaged them in hand to hand combat, ", "began shooting at them, ", "turned and ran away, ", "offered them a truce, ", "told them to surrender, "],
 /*belonging*/&["but then ", "unfortunately this was interrupted when ", "before this could happen ", "suddenly, out of nowhere "],
-/*belonging*/&["a huge explosion went off, which caused ", "a passionate glance was exchanged, which caused ", "ANTI-VENOM a poisoned trap clamped on my leg , causing ", "a severe gust of rad-wind tore through the valley, causing ", "STRENGTH my body became suddenly weak, causing"],
+/*belonging*/&["a huge explosion went off, which caused ", "a passionate glance was exchanged, which caused ", "ANTI-VENOM a poisoned trap clamped on my leg , causing ", "a severe gust of rad-wind tore through the valley, causing ", "STRENGTH my body became suddenly weak, causing "],
 /*belonging*/&["COAGULANT my leg to fall off. ", "CURE my raid members to become violently sick. ", "FLAMMABLE my matches to get wet. ", "NIGHTVISION everything to go dark. "]
 ];
 
@@ -97,11 +97,17 @@ fn setup(
 
         .spawn(TextBundle {
             style: Style {
-                align_self: AlignSelf::FlexEnd,
+                align_self: AlignSelf::Center,
+                flex_wrap: FlexWrap::Wrap,
                 position_type: PositionType::Absolute,
+                max_size: Size {
+                    width: Val::Px(520.0),
+                    height: Val::Px(100.0),
+                    ..Default::default()
+                },
                 position: Rect {
-                    bottom: Val::Px(80.0),
-                    right: Val::Px(280.0),
+                    top: Val::Px(500.0),
+                    left: Val::Px(140.0),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -121,7 +127,7 @@ fn setup(
             ),
             ..Default::default()
         })
-        .with(Timer::from_seconds(20.0, true));
+        .with(Timer::from_seconds(5.0, true));
 
 }
 
