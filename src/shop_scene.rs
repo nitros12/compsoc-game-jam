@@ -1,24 +1,140 @@
 use bevy::prelude::*;
 use rand::seq::SliceRandom;
 
+use crate::jam;
+use crate::jam::JamEffect;
+
 pub struct ShopScenePlugin;
 
 struct Background;
 
-static PHRASES: &[&[&str]] = &[
-/*Intro*/    &["HUNGER I was scavenging for food when ", "The other day, ", "In a firefight, ", "Before the war, "],
-/*Villain*/  &["STRENGTH a raider far stronger than me ", "a rival gang ", "ANTI-VENOM a mutated snake with potent venom ", "an Old War soldier ", "an enemy fuel convoy ", "CURE DISEASE a feral dog, riddled with diseases, "],
-/*Adjective*/&["angrily ", "furiously ", "violently ", "suddenly "],
-/*Action*/   &["COAGULANT stabbed ", "robbed ", "destroyed ", "hunted ", "shot at "],
-/*Hero*/     &["my raiding party ", "me ", "my war-dog ", "SPEED my armoured truck, leaving me slow, ", "HUNGER my food supplies "],
-/*joining*/  &["whilst I was ", "when I was ", "after I was caught ", "for "],
-/*Action*/   &["INVISIBILTY trying to steal ", "destroying ", "SPEED escaping with ", "running over ", "gambling away ", "POISON poisoning "],
-/*belonging*/&["their water supply, ", "their supplies, ", "their credits, ", "their jam, ", "FLAMMABLE their fuel, ", "their Old World relics, ", "FLIGHT their pre-war iron bird "],
-/*belonging*/&["so we ", "so I ", "and then I ", "and then we "],
-/*belonging*/&["engaged them in hand to hand combat, ", "began shooting at them, ", "turned and ran away, ", "offered them a truce, ", "told them to surrender, "],
-/*belonging*/&["but then ", "unfortunately this was interrupted when ", "before this could happen ", "suddenly, out of nowhere "],
-/*belonging*/&["a huge explosion went off, which caused ", "a passionate glance was exchanged, which caused ", "ANTI-VENOM a poisoned trap clamped on my leg , causing ", "a severe gust of rad-wind tore through the valley, causing ", "STRENGTH my body became suddenly weak, causing "],
-/*belonging*/&["COAGULANT my leg to fall off. ", "CURE my raid members to become violently sick. ", "FLAMMABLE my matches to get wet. ", "NIGHTVISION everything to go dark. "]
+static PHRASES: &[&[(Option<JamEffect>, &str)]] = &[
+    /*Intro*/
+    &[
+        (Some(JamEffect::Hunger), "I was scavenging for food when "),
+        (None, "The other day, "),
+        (None, "In a firefight, "),
+        (None, "Before the war, "),
+    ],
+    /*Villain*/
+    &[
+        (
+            Some(JamEffect::SuperHumanStrength),
+            "a raider far stronger than me ",
+        ),
+        (None, "a rival gang "),
+        (
+            Some(JamEffect::Antivenom),
+            "a mutated snake with potent venom ",
+        ),
+        (None, "an Old War soldier "),
+        (None, "an enemy fuel convoy "),
+        (
+            Some(JamEffect::CureDisease),
+            "a feral dog, riddled with diseases, ",
+        ),
+    ],
+    /*Adjective*/
+    &[
+        (None, "angrily "),
+        (None, "furiously "),
+        (None, "violently "),
+        (None, "suddenly "),
+    ],
+    /*Action*/
+    &[
+        (Some(JamEffect::Coagulant), "stabbed "),
+        (None, "robbed "),
+        (None, "destroyed "),
+        (None, "hunted "),
+        (None, "shot at "),
+    ],
+    /*Hero*/
+    &[
+        (None, "my raiding party "),
+        (None, "me "),
+        (None, "my war-dog "),
+        (
+            Some(JamEffect::Speed),
+            "my armoured truck, leaving me slow, ",
+        ),
+        (Some(JamEffect::Hunger), "my food supplies "),
+    ],
+    /*joining*/
+    &[
+        (None, "whilst I was "),
+        (None, "when I was "),
+        (None, "after I was caught "),
+        (None, "for "),
+    ],
+    /*Action*/
+    &[
+        (Some(JamEffect::Invisibility), "trying to steal "),
+        (None, "destroying "),
+        (Some(JamEffect::Speed), "escaping with "),
+        (None, "running over "),
+        (None, "gambling away "),
+        (Some(JamEffect::Poison), "poisoning "),
+    ],
+    /*belonging*/
+    &[
+        (None, "their water supply, "),
+        (None, "their supplies, "),
+        (None, "their credits, "),
+        (None, "their jam, "),
+        (Some(JamEffect::Flammable), "their fuel, "),
+        (None, "their Old World relics, "),
+        (Some(JamEffect::Flight), "their pre-war iron bird "),
+    ],
+    /*belonging*/
+    &[
+        (None, "so we "),
+        (None, "so I "),
+        (None, "and then I "),
+        (None, "and then we "),
+    ],
+    /*belonging*/
+    &[
+        (None, "engaged them in hand to hand combat, "),
+        (None, "began shooting at them, "),
+        (None, "turned and ran away, "),
+        (None, "offered them a truce, "),
+        (None, "told them to surrender, "),
+    ],
+    /*belonging*/
+    &[
+        (None, "but then "),
+        (None, "unfortunately this was interrupted when "),
+        (None, "before this could happen "),
+        (None, "suddenly, out of nowhere "),
+    ],
+    /*belonging*/
+    &[
+        (None, "a huge explosion went off, which caused "),
+        (None, "a passionate glance was exchanged, which caused "),
+        (
+            Some(JamEffect::Antivenom),
+            "a poisoned trap clamped on my leg , causing ",
+        ),
+        (
+            None,
+            "a severe gust of rad-wind tore through the valley, causing ",
+        ),
+        (
+            Some(JamEffect::SuperHumanStrength),
+            "my body became suddenly weak, causing ",
+        ),
+    ],
+    /*belonging*/
+    &[
+        (Some(JamEffect::Coagulant), "my leg to fall off. "),
+        (
+            Some(JamEffect::CureDisease),
+            "my raid members to become violently sick. ",
+        ),
+        (Some(JamEffect::Flammable), "my matches to get wet. "),
+        (Some(JamEffect::NightVision), "everything to go dark. "),
+    ],
 ];
 
 struct Moveable {
@@ -29,13 +145,12 @@ struct Moveable {
 }
 
 impl Plugin for ShopScenePlugin {
-    fn build(&self, app: &mut AppBuilder){
-        app
-            .add_startup_system(setup.system())
+    fn build(&self, app: &mut AppBuilder) {
+        app.add_startup_system(setup.system())
             .add_system(animate_sprites.system())
             .add_system(move_sprites.system())
-            .add_system(gen_story.system())
-    ;}
+            .add_system(gen_story.system());
+    }
 }
 
 fn setup(
@@ -54,47 +169,39 @@ fn setup(
     let buggy_atlas_handle = texture_atlases.add(buggy_atlas);
 
     commands
-        .spawn(SpriteBundle
-        {
+        .spawn(SpriteBundle {
             material: materials.add(background_handle.into()),
             ..Default::default()
         })
         .with(Background)
-
-        .spawn(SpriteSheetBundle
-        {
+        .spawn(SpriteSheetBundle {
             texture_atlas: tumbleweed_atlas_handle,
             ..Default::default()
         })
         .with(Timer::from_seconds(0.1, true))
-        .with(Moveable{
+        .with(Moveable {
             move_timer: Timer::from_seconds(20.0, true),
             start: Vec2::new(-420.0, -50.0),
             end: Vec2::new(420.0, -50.0),
             delay_timer: Timer::from_seconds(15.0, true),
         })
-
-        .spawn(SpriteSheetBundle
-        {
+        .spawn(SpriteSheetBundle {
             texture_atlas: buggy_atlas_handle,
             ..Default::default()
         })
         .with(Timer::from_seconds(0.1, true))
-        .with(Moveable{
+        .with(Moveable {
             move_timer: Timer::from_seconds(5.0, true),
             start: Vec2::new(520.0, -70.0),
             end: Vec2::new(-520.0, -70.0),
             delay_timer: Timer::from_seconds(40.0, true),
         })
-
-        .spawn(SpriteBundle
-        {
+        .spawn(SpriteBundle {
             material: materials.add(shopfront_handle.into()),
             transform: Transform::from_xyz(0.0, 0.0, 3.0),
             ..Default::default()
         })
         .with(Background)
-
         .spawn(TextBundle {
             style: Style {
                 align_self: AlignSelf::Center,
@@ -128,7 +235,6 @@ fn setup(
             ..Default::default()
         })
         .with(Timer::from_seconds(5.0, true));
-
 }
 
 fn animate_sprites(
@@ -145,19 +251,22 @@ fn animate_sprites(
     }
 }
 
-fn move_sprites(
-    time: Res<Time>,
-    mut query: Query<(&mut Moveable, &mut Transform)>,
-) {
-    for (mut moveable, mut transform) in query.iter_mut()
-    {
-        if !moveable.move_timer.tick(time.delta_seconds()).just_finished() && !moveable.move_timer.paused()
+fn move_sprites(time: Res<Time>, mut query: Query<(&mut Moveable, &mut Transform)>) {
+    for (mut moveable, mut transform) in query.iter_mut() {
+        if !moveable
+            .move_timer
+            .tick(time.delta_seconds())
+            .just_finished()
+            && !moveable.move_timer.paused()
         {
-            let new_pos = moveable.start + (moveable.end - moveable.start) * moveable.move_timer.percent();
+            let new_pos =
+                moveable.start + (moveable.end - moveable.start) * moveable.move_timer.percent();
             transform.translation.x = new_pos.x;
             transform.translation.y = new_pos.y;
-        }
-        else if !moveable.delay_timer.tick(time.delta_seconds()).just_finished()
+        } else if !moveable
+            .delay_timer
+            .tick(time.delta_seconds())
+            .just_finished()
         {
             moveable.move_timer.pause();
         } else {
@@ -167,24 +276,20 @@ fn move_sprites(
     }
 }
 
-fn gen_story(
-    time: Res<Time>,
-    mut query: Query<(&mut Timer, &mut Text)>
-)
-{
-    for (mut timer, mut text) in query.iter_mut(){
-        if !timer.tick(time.delta_seconds()).just_finished()
-        {
+fn gen_story(time: Res<Time>, mut query: Query<(&mut Timer, &mut Text)>) {
+    for (mut timer, mut text) in query.iter_mut() {
+        if !timer.tick(time.delta_seconds()).just_finished() {
             return;
         }
 
+        let mut effects = Vec::new();
         let mut story = String::from("");
-        for x in 0..13
-        {
-            let var1 = PHRASES[x].choose(&mut rand::thread_rng()).unwrap().to_string();
-            &story.push_str(&var1);
+        for x in 0..13 {
+            let (effect, text_fragment) = PHRASES[x].choose(&mut rand::thread_rng()).unwrap();
+            story.push_str(text_fragment);
+            effects.push(effect);
         }
-        &story.push_str("As you can tell, I am in deperate need of assistance, do you have any jam that could help me ensure this doesn't happen again?");
+        story.push_str("As you can tell, I am in deperate need of assistance, do you have any jam that could help me ensure this doesn't happen again?");
         text.sections[0].value = format!("{:2}", story)
     }
 }
