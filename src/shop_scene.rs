@@ -1,12 +1,14 @@
+use std::collections::HashSet;
+
 use bevy::prelude::*;
 use rand::seq::SliceRandom;
 
 use crate::cauldron_scene::CauldronContents;
 use crate::jam;
-use crate::jam::JamEffect;
+use crate::jam::{JamEffect, JamIngredient};
 use crate::utils::average_colours;
 use crate::{
-    dragging,
+    dragging::{self, DroppedOntoEvent},
     gamestate::{GameStage, GameState},
 };
 
@@ -15,11 +17,13 @@ pub struct ShopScenePlugin;
 struct StoryAssets {
     story_timer: Timer,
     story_text: String,
+    story_requirements: HashSet<JamEffect>,
+    story_met: bool,
 }
 
 struct Story;
 struct JamJar;
-struct Score;
+struct Score(u64);
 
 static PHRASES: &[&[(Option<JamEffect>, &str)]] = &[
     /*Intro*/
@@ -175,6 +179,7 @@ impl Plugin for ShopScenePlugin {
                 GameState::Main,
                 jam_jar_remove_on_drop.system(),
             )
+            .on_state_update(GameStage::Main, GameState::Main, handle_jam_drop.system())
             .on_state_update(GameStage::Main, GameState::Main, recolour_jam_jar.system())
             .on_state_exit(GameStage::Main, GameState::Main, teardown.system());
     }
@@ -198,6 +203,8 @@ fn setup_assets(commands: &mut Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(StoryAssets {
         story_timer,
         story_text,
+        story_requirements: HashSet::new(),
+        story_met: true,
     });
 }
 
@@ -390,10 +397,14 @@ fn gen_story(
         for x in 0..13 {
             let (effect, text_fragment) = PHRASES[x].choose(&mut rand::thread_rng()).unwrap();
             temp_story.push_str(text_fragment);
-            effects.push(effect);
+            if let Some(effect) = effect {
+                effects.push(effect);
+            }
         }
         temp_story.push_str("As you can tell, I am in deperate need of assistance, do you have any jam that could help me ensure this doesn't happen again?");
         assets.story_text = temp_story;
+        assets.story_requirements = effects.into_iter().cloned().collect();
+        assets.story_met = false;
         text.sections[0].value = format!("{:2}", assets.story_text);
     }
 }
@@ -439,6 +450,31 @@ fn jam_jar_remove_on_drop(
     for dragging::DroppedEvent(entity) in event_reader.iter() {
         if let Ok(JamJar) = q_jam_ingredient.get_component(*entity) {
             commands.despawn_recursive(*entity);
+        }
+    }
+}
+
+fn handle_jam_drop(
+    contents: Res<CauldronContents>,
+    mut story: ResMut<StoryAssets>,
+    q_jam_jar: Query<&JamJar>,
+    mut q_score: Query<(&mut Text, &mut Score)>,
+    mut event_reader: EventReader<DroppedOntoEvent>,
+) {
+    for DroppedOntoEvent { src, dst } in event_reader.iter() {
+        if let (Ok(JamJar), _) = (q_jam_jar.get_component(*src), ()) {
+            let effects = JamIngredient::calculate_effects(&contents.0);
+
+            if story.story_requirements.is_subset(&effects) {
+                story.story_met = true;
+
+                for (mut text, mut score) in q_score.iter_mut() {
+                    score.0 += 1;
+                    text.sections[0].value = score.0.to_string();
+                }
+            }
+
+            // TODO: make client go away
         }
     }
 }

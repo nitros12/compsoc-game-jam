@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use bevy::prelude::*;
 
@@ -263,10 +263,10 @@ impl JamIngredient {
         }
     }
 
-    pub fn calculate_effects(effects: &[Self]) -> Vec<JamEffect> {
+    pub fn calculate_effects(ingredients: &[Self]) -> HashSet<JamEffect> {
         let mut seen = HashMap::new();
 
-        for effect in effects.iter().flat_map(|i| i.effects()) {
+        for effect in ingredients.iter().flat_map(|i| i.effects()) {
             *seen.entry(effect).or_insert(0) += 1;
         }
 
