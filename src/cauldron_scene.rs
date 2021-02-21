@@ -2,6 +2,7 @@ use crate::button;
 use crate::dragging::{DropTarget, DroppedOntoEvent};
 use crate::gamestate::{GameStage, GameState};
 use crate::jam::JamIngredient;
+use crate::utils::average_colours;
 use bevy::prelude::*;
 
 pub struct CauldronScenePlugin;
@@ -47,7 +48,7 @@ fn teardown(commands: &mut Commands, q_background: Query<Entity, With<Background
     }
 }
 
-struct CauldronContents(Vec<JamIngredient>);
+pub struct CauldronContents(pub Vec<JamIngredient>);
 
 fn setup(
     commands: &mut Commands,
@@ -59,6 +60,7 @@ fn setup(
     let shop_front_shelf_handle = asset_server.load("sprites/frontshelf.png");
     let cauldron_top_handle = asset_server.load("sprites/cauldron_top.png");
     let return_handle = asset_server.load("sprites/return_button.png");
+    let bin_handle = asset_server.load("sprites/bin.png");
     let cauldron_content_handle = asset_server.load("sprites/cauldroncontent.png");
     let cauldron_content_atlas =
         TextureAtlas::from_grid(cauldron_content_handle, Vec2::new(256.0, 256.0), 4, 1);
@@ -110,7 +112,7 @@ fn setup(
         .with(ReturnButton)
         .with(Background)
         .spawn(ButtonBundle {
-            material: materials.add(return_handle.into()),
+            material: materials.add(bin_handle.into()),
             style: Style {
                 size: Size::new(Val::Px(128.0), Val::Px(128.0)),
                 position_type: PositionType::Absolute,
@@ -125,8 +127,7 @@ fn setup(
         })
         .with(button::ButtonState::default())
         .with(ClearButton)
-        .with(Background)
-        ;
+        .with(Background);
 }
 
 fn handle_return_click(
@@ -150,29 +151,6 @@ fn handle_clear_click(
         if let Ok(ClearButton) = q_clear.get_component(*entity) {
             contents.0.clear();
         }
-    }
-}
-
-fn average_colours<I: Iterator<Item = Color>>(it: I) -> Color {
-    let mut total = 0;
-    let (r, g, b) = it.fold((0.0, 0.0, 0.0), |(r, g, b), colour| {
-        total += 1;
-
-        (
-            r + colour.r().powi(2),
-            g + colour.g().powi(2),
-            b + colour.b().powi(2),
-        )
-    });
-
-    if total > 0 {
-        Color::rgb(
-            (r / total as f32).sqrt(),
-            (g / total as f32).sqrt(),
-            (b / total as f32).sqrt(),
-        )
-    } else {
-        Color::rgba(0.0, 0.0, 0.0, 0.0)
     }
 }
 

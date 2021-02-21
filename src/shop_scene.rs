@@ -1,19 +1,24 @@
 use bevy::prelude::*;
 use rand::seq::SliceRandom;
 
-use crate::gamestate::{GameStage, GameState};
+use crate::cauldron_scene::CauldronContents;
 use crate::jam;
 use crate::jam::JamEffect;
+use crate::utils::average_colours;
+use crate::{
+    dragging,
+    gamestate::{GameStage, GameState},
+};
 
 pub struct ShopScenePlugin;
 
-struct StoryAssets
-{
+struct StoryAssets {
     story_timer: Timer,
     story_text: String,
 }
 
 struct Story;
+struct JamJar;
 struct Score;
 
 static PHRASES: &[&[(Option<JamEffect>, &str)]] = &[
@@ -155,10 +160,22 @@ struct Moveable {
 impl Plugin for ShopScenePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_startup_system_to_stage(StartupStage::PreStartup, setup_assets.system())
+            .add_startup_system_to_stage(StartupStage::PreStartup, setup_jam_jar_assets.system())
             .on_state_enter(GameStage::Main, GameState::Main, setup.system())
             .add_system(move_sprites.system())
             .add_system(animate_sprites.system())
             .add_system(gen_story.system())
+            .on_state_update(
+                GameStage::Main,
+                GameState::Main,
+                jam_jar_clone_on_drag.system(),
+            )
+            .on_state_update(
+                GameStage::Main,
+                GameState::Main,
+                jam_jar_remove_on_drop.system(),
+            )
+            .on_state_update(GameStage::Main, GameState::Main, recolour_jam_jar.system())
             .on_state_exit(GameStage::Main, GameState::Main, teardown.system());
     }
 }
@@ -167,7 +184,7 @@ struct Background;
 
 fn teardown(commands: &mut Commands, q_background: Query<Entity, With<Background>>) {
     for entity in q_background.iter() {
-        commands.despawn(entity);
+        commands.despawn_recursive(entity);
     }
 }
 
@@ -311,6 +328,8 @@ fn setup(
         })
         .with(Background)
         .with(Score);
+
+    spawn_jamjar(commands, &*asset_server, &mut *materials);
 }
 
 fn animate_sprites(
@@ -352,9 +371,17 @@ fn move_sprites(time: Res<Time>, mut query: Query<(&mut Moveable, &mut Transform
     }
 }
 
-fn gen_story(time: Res<Time>, mut assets: ResMut<StoryAssets>, mut query: Query<(&mut Story, &mut Text)>) {
+fn gen_story(
+    time: Res<Time>,
+    mut assets: ResMut<StoryAssets>,
+    mut query: Query<(&mut Story, &mut Text)>,
+) {
     for (mut story, mut text) in query.iter_mut() {
-        if !assets.story_timer.tick(time.delta_seconds()).just_finished() {
+        if !assets
+            .story_timer
+            .tick(time.delta_seconds())
+            .just_finished()
+        {
             return;
         }
 
@@ -368,5 +395,129 @@ fn gen_story(time: Res<Time>, mut assets: ResMut<StoryAssets>, mut query: Query<
         temp_story.push_str("As you can tell, I am in deperate need of assistance, do you have any jam that could help me ensure this doesn't happen again?");
         assets.story_text = temp_story;
         text.sections[0].value = format!("{:2}", assets.story_text);
+    }
+}
+
+fn spawn_jamjar(
+    commands: &mut Commands,
+    asset_server: &AssetServer,
+    materials: &mut Assets<ColorMaterial>,
+) {
+    let jam_jar = asset_server.load("sprites/jam_jar.png");
+
+    commands
+        .spawn(SpriteBundle {
+            material: materials.add(jam_jar.into()),
+            transform: Transform::from_xyz(-150.0, -105.0, 14.0),
+            ..Default::default()
+        })
+        .with(JamJar)
+        .with(Background)
+        .with(dragging::Hoverable)
+        .with(dragging::Draggable);
+}
+
+fn jam_jar_clone_on_drag(
+    commands: &mut Commands,
+    q_jamjar: Query<&JamJar>,
+    asset_server: Res<AssetServer>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut event_reader: EventReader<dragging::DraggedEvent>,
+) {
+    for dragging::DraggedEvent(entity) in event_reader.iter() {
+        if let Ok(JamJar) = q_jamjar.get_component(*entity) {
+            spawn_jamjar(commands, &*asset_server, &mut *materials);
+        }
+    }
+}
+
+fn jam_jar_remove_on_drop(
+    commands: &mut Commands,
+    q_jam_ingredient: Query<&JamJar>,
+    mut event_reader: EventReader<dragging::DroppedEvent>,
+) {
+    for dragging::DroppedEvent(entity) in event_reader.iter() {
+        if let Ok(JamJar) = q_jam_ingredient.get_component(*entity) {
+            commands.despawn_recursive(*entity);
+        }
+    }
+}
+
+struct JamJarAssets {
+    normal: Handle<Texture>,
+    filled: Handle<Texture>,
+    bg: Handle<Texture>,
+}
+
+fn setup_jam_jar_assets(commands: &mut Commands, asset_server: Res<AssetServer>) {
+    let normal = asset_server.load("sprites/jam_jar.png");
+    let filled = asset_server.load("sprites/fill_jar.png");
+    let bg = asset_server.load("sprites/fill_jar_filling.png");
+
+    commands.insert_resource(JamJarAssets { normal, filled, bg });
+}
+
+fn recolour_jam_jar(
+    commands: &mut Commands,
+    contents: Res<CauldronContents>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    jam_jar_assets: Res<JamJarAssets>,
+    mut q_material: Query<&mut Handle<ColorMaterial>>,
+    mut q_jamjar: Query<(Entity, Option<&Children>), With<JamJar>>,
+) {
+    let colour = average_colours(contents.0.iter().map(|i| i.colour()));
+
+    if colour.a() < 0.5 {
+        for (entity, children) in q_jamjar.iter_mut() {
+            let mut material = q_material.get_component_mut(entity).unwrap();
+
+            if let Some(children) = children {
+                for entity in children.as_ref() {
+                    commands.despawn(*entity);
+                }
+
+                if !children.is_empty() {
+                    *material = materials.add(jam_jar_assets.normal.clone().into());
+                }
+            }
+        }
+    } else {
+        for (entity, children) in q_jamjar.iter_mut() {
+            let mut material = q_material.get_component_mut(entity).unwrap();
+
+            if let Some(children) = children {
+                for child in children.as_ref() {
+                    let bg = q_material
+                        .get_component::<Handle<ColorMaterial>>(*child)
+                        .unwrap();
+
+                    let mat = materials.get_mut(bg).unwrap();
+                    mat.color.set_r(colour.r());
+                    mat.color.set_g(colour.g());
+                    mat.color.set_b(colour.b());
+                    mat.color.set_a(colour.a());
+                }
+            } else {
+                let bg = materials.add(jam_jar_assets.bg.clone().into());
+                let mat = materials.get_mut(&bg).unwrap();
+                mat.color.set_r(colour.r());
+                mat.color.set_g(colour.g());
+                mat.color.set_b(colour.b());
+                mat.color.set_a(colour.a());
+
+                let child = commands
+                    .spawn(SpriteBundle {
+                        material: bg,
+                        transform: Transform::from_xyz(0.0, 0.0, 14.0),
+                        ..Default::default()
+                    })
+                    .current_entity()
+                    .unwrap();
+
+                commands.push_children(entity, &[child]);
+
+                *material = materials.add(jam_jar_assets.filled.clone().into());
+            }
+        }
     }
 }

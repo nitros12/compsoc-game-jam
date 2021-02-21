@@ -7,6 +7,7 @@ mod gamestate;
 mod jam;
 mod pop_ups;
 mod shop_scene;
+mod utils;
 
 fn main() {
     App::build()

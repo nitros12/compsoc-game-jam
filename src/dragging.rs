@@ -135,9 +135,11 @@ fn material(
             (1.0, 1.0, 1.0)
         };
 
-        materials.get_mut(material).unwrap().color.set_r(red);
-        materials.get_mut(material).unwrap().color.set_g(green);
-        materials.get_mut(material).unwrap().color.set_a(alpha);
+        if let Some(mat) = materials.get_mut(material) {
+            mat.color.set_r(red);
+            mat.color.set_g(green);
+            mat.color.set_a(alpha);
+        }
     }
 }
 
