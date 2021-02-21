@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 mod button;
 mod dragging;
+mod jam;
 mod shop_scene;
 mod story_gen;
 
@@ -17,6 +18,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(dragging::DragPlugin)
         .add_plugin(shop_scene::ShopScenePlugin)
+        .add_plugin(jam::JamPlugin)
         .add_plugin(story_gen::StoryGenPlugin)
         .add_startup_system(setup_ui.system())
         .run();
@@ -34,15 +36,15 @@ fn setup_ui(
         .spawn(OrthographicCameraBundle::new_2d())
         .spawn(SpriteBundle {
             material: materials.add(jam_texture.clone().into()),
+            transform: Transform::from_xyz(0.0, 0.0, 3.0),
             ..Default::default()
         })
         .with(dragging::Hoverable)
         .with(dragging::Draggable)
         .spawn(SpriteBundle {
             material: materials.add(jam_texture.clone().into()),
-            transform: Transform::from_xyz(50.0, 50.0, 0.0),
+            transform: Transform::from_xyz(50.0, 50.0, 3.0),
             ..Default::default()
         })
-        .with(dragging::DropTarget)
-        ;
+        .with(dragging::DropTarget);
 }
