@@ -146,9 +146,9 @@ struct Moveable {
 impl Plugin for ShopScenePlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.on_state_enter(GameStage::Main, GameState::Main, setup.system())
-            .on_state_update(GameStage::Main, GameState::Main, animate_sprites.system())
-            .on_state_update(GameStage::Main, GameState::Main, move_sprites.system())
-            .on_state_update(GameStage::Main, GameState::Main, gen_story.system())
+            .add_system(move_sprites.system())
+            .add_system(animate_sprites.system())
+            .add_system(gen_story.system())
             .on_state_exit(GameStage::Main, GameState::Main, teardown.system());
     }
 }
